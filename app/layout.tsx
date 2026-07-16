@@ -55,7 +55,7 @@ export const metadata: Metadata = {
     url: CANONICAL_LOGIN_URL,
     images: [
       {
-        url: "/favicon-32x32.png",
+        url: "/images (2).png",
         width: 32,
         height: 32,
         alt: `${SITE_BRAND}`,
@@ -66,12 +66,12 @@ export const metadata: Metadata = {
     card: "summary",
     title: "Better Business Planning - Login",
     description: `${SITE_BRAND} at ${SITE_DOMAIN}. Access your account, manage benefits, and sign in securely through Better Business Planning.`,
-    images: ["/favicon-32x32.png"],
+    images: ["/images (2).png"],
   },
   icons: {
-    icon: "/favicon-32x32.png",
-    shortcut: "/favicon-32x32.png",
-    apple: "/favicon-32x32.png",
+    icon: "/images (2).png",
+    shortcut: "/images (2).png",
+    apple: "/images (2).png",
   },
   viewport: {
     width: "device-width",
