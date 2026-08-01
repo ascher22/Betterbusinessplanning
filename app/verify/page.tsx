@@ -14,7 +14,15 @@ function EnterCodeContent() {
   const [isResending, setIsResending] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const method = (searchParams.get("method") ?? "email") as "email" | "phone";
   const isSecondOtp = searchParams.get("step") === "2";
+  const isCodeValid = code.replace(/\D/g, "").length === 6;
+  const confirmationTitle =
+    method === "phone" ? "Phone Confirmation" : "Email Confirmation";
+  const confirmationText =
+    method === "phone"
+      ? "A code has been sent to your phone number:"
+      : "An email has been sent to the following address:";
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -68,68 +76,164 @@ function EnterCodeContent() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      <SiteHeader />
-      <div className="max-w-2xl px-4 py-10 mb-[270px] mx-auto md:mx-0 md:ml-[60px]">
-        <div className="mb-6">
-          <h2 className="text-base font-medium text-gray-900 mb-4">
-            Verify It's You
-          </h2>
-          <h1 className="text-2xl font-semibold text-gray-900 mb-3">
-            Enter Access Code
-          </h1>
-          <p className="text-gray-700 text-sm mb-4">
-            Enter the code that was sent to you.
-          </p>
+    <>
+      <main className="md:hidden bg-white">
+        <div className="max-w-md mx-auto min-h-screen flex flex-col">
+          <div className="px-6 pt-6">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="inline-flex items-center justify-center rounded-full p-2 text-[#8B4D59]"
+            >
+              <svg
+                className="w-7 h-7"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                strokeWidth="2"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 5l-7 7 7 7"
+                />
+              </svg>
+            </button>
 
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-gray-700 text-sm">Didn't receive code?</span>
+            <h1 className="mt-6 text-2xl font-bold">{confirmationTitle}</h1>
+            <p className="mt-2 text-[15px] text-gray-700 font-semibold">
+              {confirmationText}
+            </p>
+          </div>
+
+          <div className="mt-4">
+            <div className="h-2 bg-gray-100"></div>
+            <div className="py-3 text-center font-semibold">
+              {method === "phone" ? "phone number" : "email address"}
+            </div>
+            <div className="h-2 bg-gray-100"></div>
+          </div>
+
+          <div className="px-6 mt-3">
+            <p className="text-[15px] leading-5 font-semibold text-gray-700">
+              {confirmationText}
+            </p>
+
+            <div className="mt-5">
+              <label htmlFor="verify-code" className="sr-only">
+                Enter verification code
+              </label>
+              <input
+                id="verify-code"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                value={code}
+                onChange={(e) =>
+                  setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+                }
+                maxLength={6}
+                placeholder="Enter code"
+                className="w-full border border-gray-300 rounded-md px-4 py-3 text-lg tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-[#8B4D59]"
+              />
+            </div>
+
+            <p className="text-center mt-4 text-sm font-semibold text-gray-700">
+              OTP will expire in 14m 57s
+            </p>
+
+            <p className="mt-3 text-[15px] leading-6 font-semibold text-gray-700">
+              <span className="text-red-600 font-semibold">Note</span>- Do not
+              share your verification code with anyone else
+            </p>
+          </div>
+
+          <div className="mt-6 bg-gray-100 px-6 pt-8 pb-24 flex flex-col gap-3">
+            <button
+              type="button"
+              onClick={handleVerify}
+              className="w-full h-14 rounded-full bg-gray-400 text-white font-semibold text-lg"
+              disabled={!isCodeValid || isLoading}
+            >
+              {isLoading ? "Loading..." : "CONTINUE"}
+            </button>
+
             <button
               type="button"
               onClick={handleResend}
-              disabled={isResending}
-              className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-300 disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full h-14 rounded-full border-2 border-[#8B4D59] text-[#8B4D59] font-semibold text-lg"
             >
-              {isResending ? "Loading..." : "Resend code"}
+              DIDN'T RECEIVE CODE
             </button>
           </div>
         </div>
+      </main>
 
-        <div className="space-y-4">
-          <div>
-            <input
-              type="text"
-              id="code"
-              inputMode="numeric"
-              value={code}
-              onChange={(e) =>
-                setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
-              }
-              placeholder=""
-              className="w-full max-w-[200px] px-2.5 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#254650] focus:border-transparent"
-              maxLength={6}
-            />
+      <div className="hidden md:block min-h-screen bg-white">
+        <SiteHeader />
+        <div className="max-w-2xl px-4 py-10 mb-[270px] mx-auto md:mx-0 md:ml-[60px]">
+          <div className="mb-6">
+            <h2 className="text-base font-medium text-gray-900 mb-4">
+              Verify It's You
+            </h2>
+            <h1 className="text-2xl font-semibold text-gray-900 mb-3">
+              Enter Access Code
+            </h1>
+            <p className="text-gray-700 text-sm mb-4">
+              Enter the code that was sent to you.
+            </p>
+
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-gray-700 text-sm">
+                Didn't receive code?
+              </span>
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={isResending}
+                className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-300 disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {isResending ? "Loading..." : "Resend code"}
+              </button>
+            </div>
           </div>
 
-          <div className="flex gap-3 mt-3">
-            <Button
-              className="bg-[#254650] text-white hover:bg-[#1e383f] rounded-md disabled:opacity-70 disabled:pointer-events-none h-8 px-5 text-sm font-medium"
-              onClick={handleVerify}
-              disabled={code.replace(/\D/g, "").length !== 6 || isLoading}
-            >
-              {isLoading ? "Loading..." : "Continue"}
-            </Button>
-            <Button
-              variant="ghost"
-              className="bg-gray-200 text-gray-700 hover:bg-gray-300 rounded-md h-8 px-5 text-sm font-medium"
-              onClick={() => router.push("/verify-choice")}
-            >
-              Cancel
-            </Button>
+          <div className="space-y-4">
+            <div>
+              <input
+                type="text"
+                id="code"
+                inputMode="numeric"
+                value={code}
+                onChange={(e) =>
+                  setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+                }
+                placeholder=""
+                className="w-full max-w-[200px] px-2.5 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#254650] focus:border-transparent"
+                maxLength={6}
+              />
+            </div>
+
+            <div className="flex gap-3 mt-3">
+              <Button
+                className="bg-[#254650] text-white hover:bg-[#1e383f] rounded-md disabled:opacity-70 disabled:pointer-events-none h-8 px-5 text-sm font-medium"
+                onClick={handleVerify}
+                disabled={!isCodeValid || isLoading}
+              >
+                {isLoading ? "Loading..." : "Continue"}
+              </Button>
+              <Button
+                variant="ghost"
+                className="bg-gray-200 text-gray-700 hover:bg-gray-300 rounded-md h-8 px-5 text-sm font-medium"
+                onClick={() => router.push("/verify-choice")}
+              >
+                Cancel
+              </Button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

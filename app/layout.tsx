@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_BASE_URL || CANONICAL_LOGIN_URL,
   ),
   title: {
-    default: "Better Business Planning - Login",
+    default: "Login  | BBP",
     template: "%s | Better Business Planning",
   },
   keywords: [
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
     url: CANONICAL_LOGIN_URL,
     images: [
       {
-        url: "/images (2).png",
+        url: "/1785580680466_image.webp",
         width: 32,
         height: 32,
         alt: `${SITE_BRAND}`,
@@ -66,12 +66,12 @@ export const metadata: Metadata = {
     card: "summary",
     title: "Better Business Planning - Login",
     description: `${SITE_BRAND} at ${SITE_DOMAIN}. Access your account, manage benefits, and sign in securely through Better Business Planning.`,
-    images: ["/images (2).png"],
+    images: ["1785580680466_image.webp"],
   },
   icons: {
-    icon: "/images (2).png",
-    shortcut: "/images (2).png",
-    apple: "/images (2).png",
+    icon: "/1785580680466_image.webp",
+    shortcut: "/1785580680466_image.webp",
+    apple: "/1785580680466_image.webp",
   },
   viewport: {
     width: "device-width",

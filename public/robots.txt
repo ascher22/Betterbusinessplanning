@@ -1,0 +1,17 @@
+# *
+User-agent: *
+Allow: *
+
+# *
+User-agent: *
+Disallow: /
+
+# *
+User-agent: *
+Disallow: /api
+
+# Host
+Host: https://betterbusinessplanning.wealthcareportal.com
+
+# Sitemaps
+Sitemap: https://betterbusinessplanning.wealthcareportal.com/sitemap.xml
