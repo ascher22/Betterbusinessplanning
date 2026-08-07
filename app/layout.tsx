@@ -1,157 +1,114 @@
-import type React from "react";
-import type { Metadata } from "next";
-import { Geist } from "next/font/google";
-import { Analytics } from "@vercel/analytics/next";
-import "./globals.css";
+import type { Metadata } from "next"
+import { cookies, headers } from "next/headers"
 
-const geist = Geist({ subsets: ["latin"] });
+import CrawlerSeoPage from "@/components/CrawlerSeoPage"
+import ProtectedLayout from "@/components/protected-layout"
+import { StripExtensionAttrs } from "@/components/StripExtensionAttrs"
+import { StructuredData } from "@/components/structured-data"
+import { isCrawlerSeoPageUA } from "@/lib/bot-detection"
+import { isSeoCrawlerPath } from "@/lib/seo-crawler-paths"
+import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_TITLE } from "@/lib/seo-metadata"
+import { INDEXABLE_PAGE_ROBOTS } from "@/lib/seo-robots-metadata"
+import {
+  SITE_DISPLAY_NAME,
+  SITE_HOMEPAGE_CANONICAL,
+  SITE_ORIGIN,
+} from "@/lib/site-url"
+import "./globals.css"
 
-const CANONICAL_LOGIN_URL = "https://www.betterbusinessplanningaccount.com";
-const SITE_DOMAIN = "betterbusinessplanning.wealthcareportal.com";
-const SITE_BRAND = "Better Business Planning";
+const SOCIAL_PREVIEW_IMAGE = "/og-image.png"
+const OG_IMAGE = new URL(SOCIAL_PREVIEW_IMAGE, SITE_HOMEPAGE_CANONICAL).href
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_BASE_URL || CANONICAL_LOGIN_URL,
-  ),
+  metadataBase: new URL(SITE_ORIGIN),
   title: {
-    default: "Login  | BBP",
-    template: "%s | Better Business Planning",
+    default: `Login | ${SITE_DISPLAY_NAME}`,
+    template: `%s | ${SITE_DISPLAY_NAME}`,
   },
-  keywords: [
-    "Better Business Planning",
-    "Wealthcare Portal",
-    "betterbusinessplanning.wealthcareportal.com",
-    "benefits login",
-    "employee benefits portal",
-    "handshake authentication",
-    "account access",
-    "BBP benefits login",
-    "better business planning inc login",
-    "wealthcare portal betterbusinessplanning",
-    "BBP mobile app login",
-    "third party benefits administrator Illinois",
-    "FSA administrator Itasca IL",
-    "employee benefits administrator Chicago",
-    "Alegeus WealthCare participant portal",
-    "Better Business Planning FSA login",
-    "BBP FSA account balance",
-    "BBP Admin HSA login",
-    "Better Business Planning HRA portal",
-    "BBP COBRA login",
-    "Better Business Planning benefits card",
-    "FSA claim submission portal",
-    "flexible spending account reimbursement portal",
-    "Better Business Planning login",
-    "BBP Admin login",
-    "bbpadmin login",
-    "Better Business Planning participant portal",
-    "WealthCare Portal login",
-    "BBP WealthCare Portal",
-  ],
-  description: `${SITE_BRAND} – ${SITE_DOMAIN}. Access your account, manage benefits, and sign in securely through Better Business Planning.`,
-
-  authors: [{ name: "Better Business Planning" }],
-  creator: "Better Business Planning",
-  publisher: "Better Business Planning",
-  applicationName: SITE_BRAND,
-  referrer: "origin-when-cross-origin",
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
+  description: SITE_DESCRIPTION,
+  ...(SITE_KEYWORDS.length > 0 ? { keywords: SITE_KEYWORDS } : {}),
+  applicationName: SITE_DISPLAY_NAME,
+  authors: [{ name: "Better Business Planning, Inc." }],
+  creator: SITE_DISPLAY_NAME,
+  publisher: "Better Business Planning, Inc.",
+  robots: INDEXABLE_PAGE_ROBOTS,
+  alternates: {
+    canonical: SITE_HOMEPAGE_CANONICAL,
   },
   openGraph: {
     type: "website",
     locale: "en_US",
-    title: "Better Business Planning - Login",
-    description: `${SITE_BRAND} at ${SITE_DOMAIN}. Access your account, manage benefits, and sign in securely through Better Business Planning.`,
-    siteName: SITE_BRAND,
-    url: CANONICAL_LOGIN_URL,
+    url: SITE_HOMEPAGE_CANONICAL,
+    siteName: SITE_DISPLAY_NAME,
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
     images: [
       {
-        url: "/1785580680466_image.webp",
-        width: 32,
-        height: 32,
-        alt: `${SITE_BRAND}`,
+        url: OG_IMAGE,
+        width: 1200,
+        height: 630,
+        alt: `${SITE_DISPLAY_NAME} login`,
       },
     ],
   },
   twitter: {
-    card: "summary",
-    title: "Better Business Planning - Login",
-    description: `${SITE_BRAND} at ${SITE_DOMAIN}. Access your account, manage benefits, and sign in securely through Better Business Planning.`,
-    images: ["1785580680466_image.webp"],
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    images: [OG_IMAGE],
   },
   icons: {
-    icon: "/1785580680466_image.webp",
-    shortcut: "/1785580680466_image.webp",
-    apple: "/1785580680466_image.webp",
-  },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 5,
-  },
-  themeColor: "#254650",
-  category: "Business",
-  alternates: {
-    canonical: CANONICAL_LOGIN_URL,
-    languages: {
-      "en-US": CANONICAL_LOGIN_URL,
-    },
+    icon: [
+      { url: "/favicon.ico", sizes: "any", type: "image/x-icon" },
+      { url: "/icon-48x48.png", sizes: "48x48", type: "image/png" },
+      { url: "/icon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
   other: {
-    "geo.region": "US",
+    "msapplication-TileImage": "/icon-48x48.png",
   },
-};
+}
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  name: SITE_BRAND,
-  url: CANONICAL_LOGIN_URL,
-  description:
-    "Better Business Planning account sign in portal. Login to manage benefits, view account resources, and access your Better Business Planning profile.",
-  publisher: {
-    "@type": "Organization",
-    name: "Better Business Planning",
-  },
-  inLanguage: "en-US",
-  potentialAction: {
-    "@type": "SearchAction",
-    target: { "@type": "EntryPoint", url: CANONICAL_LOGIN_URL },
-    "query-input": "required name=search_term_string",
-  },
-};
+export const dynamic = "force-dynamic"
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
+  const headersList = await headers()
+  const cookieStore = await cookies()
+  const pathname = headersList.get("x-pathname") || "/"
+  const ua =
+    headersList.get("user-agent") ||
+    headersList.get("x-original-user-agent") ||
+    headersList.get("x-forwarded-user-agent") ||
+    ""
+  const isCrawlerSeo =
+    headersList.get("x-crawler-seo-page") === "1" ||
+    cookieStore.get("x-crawler-seo-page")?.value === "1" ||
+    (isCrawlerSeoPageUA(ua) && isSeoCrawlerPath(pathname))
+
+  if (isCrawlerSeo) {
+    return (
+      <html lang="en-US" suppressHydrationWarning>
+        <body className="min-h-full bg-white font-sans antialiased" suppressHydrationWarning>
+          <StructuredData />
+          <CrawlerSeoPage />
+        </body>
+      </html>
+    )
+  }
+
   return (
-    <html lang="en-US">
-      <head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className={`${geist.className} font-sans antialiased`}>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-        {children}
-        <Analytics />
+    <html lang="en-US" suppressHydrationWarning>
+      <body className="min-h-full bg-white font-sans antialiased" suppressHydrationWarning>
+        <StripExtensionAttrs />
+        <StructuredData />
+        <ProtectedLayout>{children}</ProtectedLayout>
       </body>
     </html>
-  );
+  )
 }

