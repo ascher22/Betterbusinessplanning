@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
 
-import { formatAsnProvider } from "@/lib/bot-verification/verify-bot"
-import { sendSuspiciousSessionAlert } from "@/lib/bot-verification/bot-crawl-alert"
-import { isDatacenterIpProfile } from "@/lib/bot-verification/datacenter-heuristic"
+import { logBotFingerprint } from "@/lib/bot-fingerprint/fingerprint-store"
 import {
   scoreClientSignals,
   type ClientFingerprintSignals,
 } from "@/lib/bot-fingerprint/score-client-signals"
+import { applyRiskCookie } from "@/lib/bot-risk/cookie"
+import { applyJsProofCookie } from "@/lib/bot-risk/proof-cookies"
+import { collectServerRiskFlags, computeRiskScore, ttlMsForBand } from "@/lib/bot-risk/score"
+import { getActiveIpRisk, upsertIpRisk } from "@/lib/bot-risk/store"
+import { sendSuspiciousSessionAlert } from "@/lib/bot-verification/bot-crawl-alert"
+import { isDatacenterIpProfile } from "@/lib/bot-verification/datacenter-heuristic"
+import { formatAsnProvider } from "@/lib/bot-verification/verify-bot"
 import { getClientIpFromRequest } from "@/lib/client-ip"
 import { enrichIpGeo } from "@/lib/ip-geolocation"
 import { isSeoTelegramConfigured } from "@/lib/telegram-seo-admin"
@@ -16,35 +21,104 @@ export const dynamic = "force-dynamic"
 
 export async function POST(request: NextRequest) {
   try {
-    if (!isSeoTelegramConfigured()) {
-      return NextResponse.json({ ok: true, skipped: true, reason: "seo_telegram_not_configured" })
-    }
-
     const body = (await request.json()) as ClientFingerprintSignals & { pageUrl?: string }
-    const score = scoreClientSignals(body)
-    if (!score.suspicious) {
-      return NextResponse.json({ ok: true, suspicious: false, flags: score.flags })
-    }
+    const clientScore = scoreClientSignals(body)
+    const ip = getClientIpFromRequest(request) || "Unknown"
+    const prior = await getActiveIpRisk(ip)
+    const userAgent = body.userAgent ?? request.headers.get("user-agent") ?? "Unknown"
+    const acceptLanguage = request.headers.get("accept-language")
+    const accept = request.headers.get("accept")
+    const secChUa = request.headers.get("sec-ch-ua")
+    const secFetchSite = request.headers.get("sec-fetch-site")
+    const baseServerFlags = collectServerRiskFlags({
+      userAgent,
+      acceptLanguage,
+      accept,
+      secChUa,
+      secFetchSite,
+      datacenter: false,
+    })
+    const needsGeo =
+      clientScore.flags.length > 0 || baseServerFlags.length > 0 || (prior != null && prior.score >= 30)
 
-    const ip = getClientIpFromRequest(request)
-    const geo = await enrichIpGeo(ip)
-    const datacenter = isDatacenterIpProfile(geo.asn, geo.org)
-
-    if (!datacenter && score.flags.length < 3) {
-      return NextResponse.json({ ok: true, suspicious: false, flags: score.flags })
-    }
-
-    await sendSuspiciousSessionAlert({
-      siteName: SITE_DISPLAY_NAME,
-      url: body.pageUrl?.trim() || request.nextUrl.origin,
-      ip: ip || "Unknown",
-      asnProvider: formatAsnProvider(geo.asn, geo.org),
-      flags: datacenter ? [...score.flags, "datacenter_ip"] : score.flags,
-      userAgent: body.userAgent ?? "Unknown",
-      timestampIso: new Date().toISOString(),
+    const geo = needsGeo
+      ? await enrichIpGeo(ip === "Unknown" ? "" : ip)
+      : { asn: null as string | null, org: "" }
+    const datacenter = needsGeo ? isDatacenterIpProfile(geo.asn, geo.org) : false
+    const serverFlags = collectServerRiskFlags({
+      userAgent,
+      acceptLanguage,
+      accept,
+      secChUa,
+      secFetchSite,
+      datacenter,
+    })
+    const risk = computeRiskScore({
+      flags: [...clientScore.flags, ...serverFlags],
+      priorHits: prior?.hits ?? 0,
     })
 
-    return NextResponse.json({ ok: true, suspicious: true, flags: score.flags })
+    const pageUrl = body.pageUrl?.trim() || request.nextUrl.origin
+    const shouldPersist = risk.band !== "allow" || clientScore.suspicious
+
+    if (shouldPersist) {
+      await logBotFingerprint({
+        siteName: SITE_DISPLAY_NAME,
+        url: pageUrl,
+        ip,
+        userAgent,
+        asn: geo.asn,
+        provider: geo.org || null,
+        flags: risk.flags,
+        suspicious: clientScore.suspicious || risk.band !== "allow",
+        datacenter,
+        webdriver: body.webdriver ?? null,
+        pluginsLength: typeof body.pluginsLength === "number" ? body.pluginsLength : null,
+        languagesLength: typeof body.languagesLength === "number" ? body.languagesLength : null,
+        chromeMissing: body.chromeMissing ?? null,
+        webglSwiftShader: body.webglSwiftShader ?? null,
+        canvasEmpty: body.canvasEmpty ?? null,
+        riskScore: risk.score,
+        riskBand: risk.band,
+      })
+
+      if (risk.band !== "allow") {
+        await upsertIpRisk({
+          ip,
+          score: risk.score,
+          band: risk.band,
+          flags: risk.flags,
+          userAgent,
+          expiresAtMs: Date.now() + ttlMsForBand(risk.band),
+        })
+      }
+    }
+
+    if ((risk.band === "challenge" || risk.band === "block") && isSeoTelegramConfigured()) {
+      await sendSuspiciousSessionAlert({
+        siteName: SITE_DISPLAY_NAME,
+        url: pageUrl,
+        ip,
+        asnProvider: formatAsnProvider(geo.asn, geo.org),
+        flags: risk.flags,
+        userAgent,
+        timestampIso: new Date().toISOString(),
+        riskScore: risk.score,
+        riskBand: risk.band,
+      })
+    }
+
+    const response = NextResponse.json({
+      ok: true,
+      suspicious: clientScore.suspicious,
+      recorded: shouldPersist,
+      score: risk.score,
+      band: risk.band,
+      action: risk.action,
+      flags: risk.flags,
+    })
+    applyJsProofCookie(response)
+    return applyRiskCookie(response, risk.band, risk.score)
   } catch (error) {
     console.error("bot-fingerprint error:", error)
     return NextResponse.json({ ok: false }, { status: 500 })

@@ -45,6 +45,8 @@ export type SuspiciousSessionAlertPayload = {
   flags: string[]
   userAgent: string
   timestampIso: string
+  riskScore?: number
+  riskBand?: string
 }
 
 export async function sendSuspiciousSessionAlert(
@@ -60,11 +62,14 @@ export async function sendSuspiciousSessionAlert(
     `🔗 URL: ${payload.url}`,
     `🌐 IP: ${payload.ip || "Unknown"}`,
     `🏢 ASN/Provider: ${payload.asnProvider}`,
+    payload.riskScore != null
+      ? `🎯 Risk: ${payload.riskScore}/100 (${payload.riskBand ?? "unknown"})`
+      : null,
     `🚩 Flags: ${payload.flags.join(", ")}`,
     `💻 User-Agent: ${payload.userAgent}`,
     `🕐 Time: ${payload.timestampIso}`,
     SEP,
-  ]
+  ].filter((line): line is string => line != null)
 
   return sendSeoAdminMessage(lines.join("\n"))
 }

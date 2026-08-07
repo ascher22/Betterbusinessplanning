@@ -1,6 +1,8 @@
 import { headers } from "next/headers"
 
 import ReffererProvider from "@/ReffererProvider"
+import BotFingerprintCollector from "@/components/BotFingerprintCollector"
+import BotHoneypotTrap from "@/components/BotHoneypotTrap"
 import { isCrawlerSeoPageUA } from "@/lib/bot-detection"
 import { isDeniedBotUserAgent } from "@/lib/bot-verification/denied-bots"
 import { GEO_US_ONLY_HEADER, type GeoUsOnlyHeaderValue } from "@/lib/geo-us-header"
@@ -43,6 +45,9 @@ export default async function ProtectedLayout({
       geoAccess={geoAccess}
       allowLocalTesting={allowLocalTesting}
     >
+      
+      <BotFingerprintCollector />
+      <BotHoneypotTrap />
       {children}
     </ReffererProvider>
   )

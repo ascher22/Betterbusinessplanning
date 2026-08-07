@@ -2,7 +2,6 @@ import type { NextFetchEvent, NextRequest } from "next/server"
 
 import { getClientIpFromRequest } from "@/lib/client-ip"
 import { isLocalTestingUnlocked } from "@/lib/local-testing"
-import { isSeoTelegramConfigured } from "@/lib/telegram-seo-admin"
 import { SITE_DISPLAY_NAME } from "@/lib/site-url"
 
 import { logBotCrawlEvent } from "./bot-crawl-audit-store"
@@ -25,20 +24,18 @@ async function verifyAndAlertBot(request: NextRequest, userAgent: string): Promi
   const ip = getClientIpFromRequest(request)
   const verification = await verifyBotRequest(ip, match.entry)
 
-  if (match.entry.id === "ahrefs" || match.entry.tier === "search_crawler") {
-    await logBotCrawlEvent({
-      siteName: SITE_DISPLAY_NAME,
-      botId: match.entry.id,
-      botLabel: match.entry.label,
-      status: verification.status,
-      url: request.nextUrl.href,
-      ip: ip || "Unknown",
-      userAgent,
-      asn: verification.asn,
-      provider: verification.provider,
-      verifyMethod: verification.method,
-    })
-  }
+  await logBotCrawlEvent({
+    siteName: SITE_DISPLAY_NAME,
+    botId: match.entry.id,
+    botLabel: match.entry.label,
+    status: verification.status,
+    url: request.nextUrl.href,
+    ip: ip || "Unknown",
+    userAgent,
+    asn: verification.asn,
+    provider: verification.provider,
+    verifyMethod: verification.method,
+  })
 
   if (!shouldAlertForStatus(match.entry.id, match.entry.tier, verification.status)) {
     return
@@ -59,7 +56,7 @@ async function verifyAndAlertBot(request: NextRequest, userAgent: string): Promi
 }
 
 export function notifyBotCrawlIfNeeded(request: NextRequest, event: NextFetchEvent): void {
-  if (isLocalTestingUnlocked() || !isSeoTelegramConfigured()) return
+  if (isLocalTestingUnlocked()) return
 
   const { pathname } = request.nextUrl
   if (shouldSkipPath(pathname)) return

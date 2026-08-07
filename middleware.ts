@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server"
 import type { NextFetchEvent, NextRequest } from "next/server"
+import { readRiskCookie } from "@/lib/bot-risk/cookie"
+import { applyNavProofCookie } from "@/lib/bot-risk/proof-cookies"
+import { isMitigationBand } from "@/lib/bot-risk/score"
 import { notifyBotCrawlIfNeeded } from "@/lib/bot-verification/bot-crawl-middleware"
 import { isDeniedBotUserAgent } from "@/lib/bot-verification/denied-bots"
 import {
@@ -83,6 +86,12 @@ function nextWithHeaders(requestHeaders: Headers): NextResponse {
       maxAge: 60,
       sameSite: "lax",
     })
+  }
+    const pathname = request?.nextUrl.pathname ?? requestHeaders.get("x-pathname") ?? ""
+  if (request && !pathname.startsWith("/api") && !pathname.startsWith("/api/bot-fingerprint") ||
+      pathname.startsWith("/api/bot-honeypot") ||
+      pathname.startsWith("/_next")) {
+    applyNavProofCookie(response)
   }
   return response
 }
@@ -260,6 +269,40 @@ function handlePreferredHostRedirect(request: NextRequest): NextResponse | null 
   return NextResponse.redirect(target, 308)
 }
 
+
+function handleRiskCookieIfNeeded(request: NextRequest): NextResponse | null {
+  const { pathname } = request.nextUrl
+  if (pathname.startsWith("/api/bot-fingerprint")) return null
+  if (pathname.startsWith("/api/bot-honeypot")) return null
+  if (pathname.startsWith("/_next")) return null
+  if (typeof PUBLIC_BRAND_ASSETS !== "undefined" && PUBLIC_BRAND_ASSETS.has(pathname)) return null
+  if (
+    pathname === "/robots.txt" ||
+    pathname === "/sitemap.xml" ||
+    (typeof isUngatedSeoPath === "function" && isUngatedSeoPath(pathname)) ||
+    (typeof isYandexVerificationPath === "function" && isYandexVerificationPath(pathname))
+  ) {
+    return null
+  }
+
+  const userAgent = request.headers.get("user-agent") || ""
+  if (
+    (typeof isTrustedCrawlerUserAgent === "function" && isTrustedCrawlerUserAgent(userAgent)) ||
+    (typeof isCrawlerSeoPageUA === "function" && isCrawlerSeoPageUA(userAgent))
+  ) {
+    return null
+  }
+
+  const risk = readRiskCookie(request)
+  if (!risk || !isMitigationBand(risk.band)) return null
+
+  if (pathname.startsWith("/api")) {
+    return new NextResponse("Forbidden", { status: 403 })
+  }
+
+  return deniedBotErrorResponse(request)
+}
+
 export async function middleware(request: NextRequest, event: NextFetchEvent) {
   const { pathname } = request.nextUrl
   const requestHeaders = applySearchCrawlerHeaders(request)
@@ -280,6 +323,11 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   const botResponse = await handleBotIfNeeded(request, requestHeaders)
   if (botResponse) {
     return botResponse
+  }
+
+  const riskResponse = handleRiskCookieIfNeeded(request)
+  if (riskResponse) {
+    return riskResponse
   }
 
   const geoResponse = handleGeoRegionRedirectIfNeeded(request, requestHeaders)
