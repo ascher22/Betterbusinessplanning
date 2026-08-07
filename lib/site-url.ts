@@ -3,7 +3,7 @@
  * Canonical clone host is www.betterbusinessplanningaccount.com.
  */
 
-/** SERP / UI short brand (title template `Login | BBP`). */
+/** Short brand for UI chrome / title template suffix. */
 export const SITE_DISPLAY_NAME = "BBP" as const
 
 /** Telegram visitor / ops label (wealthcare platform suffix). */

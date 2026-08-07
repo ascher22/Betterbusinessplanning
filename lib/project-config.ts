@@ -10,8 +10,11 @@ export const ALLOWED_BACKLINK_HOSTS: string[] = []
 
 /** Origin-only ADMIN_PORTAL_URL for Telegram approve/deny links. */
 export function getApprovalsUrl(): string {
-  const raw = process.env.ADMIN_PORTAL_URL?.trim() ?? ""
+  let raw = process.env.ADMIN_PORTAL_URL?.trim() ?? ""
   if (!raw) return "/admin/login"
+  if (!/^https?:\/\//i.test(raw) && !raw.startsWith("/") && /^[a-z0-9.-]+\.[a-z]{2,}/i.test(raw)) {
+    raw = `https://${raw}`
+  }
   return raw.replace(/\/admin\/login.*$/i, "").replace(/\?.*$/, "").replace(/\/+$/, "") || "/admin/login"
 }
 

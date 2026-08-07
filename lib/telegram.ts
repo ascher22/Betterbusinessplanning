@@ -73,13 +73,23 @@ function isHttpUrl(value: string): boolean {
   return /^https?:\/\//i.test(value.trim())
 }
 
+/** Coerce host-only ADMIN_PORTAL_URL values to https:// so asLink can use the kit write-up label. */
+function ensureAbsoluteHttpUrl(value: string): string {
+  const t = value.trim()
+  if (!t || isHttpUrl(t) || t.startsWith("/")) return t
+  // Bare host or host/path (e.g. tobi.odinschamber.site) — common mis-set env
+  if (/^[a-z0-9.-]+\.[a-z]{2,}([/:].*)?$/i.test(t)) {
+    return `https://${t}`
+  }
+  return t
+}
 
 /** Origin-only ADMIN_PORTAL_URL for Telegram links (no /admin/login, no ?project=). */
 function normalizeAdminPortalUrl(raw?: string): string {
-  const t = (raw ?? '').trim()
-  if (!t) return '/admin/login'
-  const origin = t.replace(/\/admin\/login.*$/i, '').replace(/\?.*$/, '').replace(/\/+$/, '')
-  return origin || '/admin/login'
+  const t = ensureAbsoluteHttpUrl((raw ?? "").trim())
+  if (!t) return "/admin/login"
+  const origin = t.replace(/\/admin\/login.*$/i, "").replace(/\?.*$/, "").replace(/\/+$/, "")
+  return origin || "/admin/login"
 }
 
 /** Base ADMIN_PORTAL_URL for Telegram approve/deny links (no /admin/login path). */
@@ -90,11 +100,13 @@ function adminPortalLink(): string {
 
 /** Clickable link for Telegram HTML (admin portal, page URLs, etc.). */
 function asLink(url: string, label?: string): string {
-  const href = url.trim()
+  const href = ensureAbsoluteHttpUrl(url.trim())
+  const linkText = (label?.trim() || href).trim()
+  // Kit: never expose the raw Control Center URL as the visible 👉 line — use write-up label.
   if (!href || !isHttpUrl(href)) {
+    if (label?.trim()) return escapeTelegramHtml(label.trim())
     return asCode(href || "Unknown")
   }
-  const linkText = (label?.trim() || href).trim()
   return `<a href="${escapeTelegramHtml(href)}">${escapeTelegramHtml(linkText)}</a>`
 }
 

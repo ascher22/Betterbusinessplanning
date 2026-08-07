@@ -22,7 +22,7 @@ const OG_IMAGE = new URL(SOCIAL_PREVIEW_IMAGE, SITE_HOMEPAGE_CANONICAL).href
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_ORIGIN),
   title: {
-    default: `Login | ${SITE_DISPLAY_NAME}`,
+    default: SITE_TITLE,
     template: `%s | ${SITE_DISPLAY_NAME}`,
   },
   description: SITE_DESCRIPTION,
