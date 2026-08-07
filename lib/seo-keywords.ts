@@ -2,8 +2,9 @@
  * SEO keywords for BBP WealthCare clone.
  * Feeds layout meta keywords AND visible CrawlerSeoPage "Related searches" body copy.
  *
- * Harvested from WealthCare portal keyword ladders (AVIDIA, FlexFacts, PlanSource, etc.)
- * with brand tokens remapped to BBP / BBP Admin / Better Business Planning variants.
+ * Sources (additive merge — never replaces prior lists):
+ * - WealthCare portal ladders remapped to BBP / BBP Admin / Better Business Planning
+ * - Final logout URL chrome (EXTERNAL_SUCCESS_URL Handshake) + bbpadmin.com about/services
  */
 
 import { CANONICAL_HOST, SITE_DISPLAY_NAME } from "@/lib/site-url"
@@ -166,6 +167,102 @@ export const DESTINATION_KEYWORDS = [
   "betterbusinessplanningaccount.com login",
 ] as const
 
+/**
+ * Additive harvest from final logout redirect
+ * (EXTERNAL_SUCCESS_URL = betterbusinessplanning.wealthcareportal.com/Authentication/Handshake)
+ * plus public BBP Admin / bbpadmin.com about & services wording.
+ * Brand tokens kept / remapped onto BBP Admin, BBP, Better Business Planning, Betterbusinessplanning.
+ * Does not replace existing keyword lists — mergeKeywords dedupes.
+ */
+export const FINAL_URL_HARVEST_KEYWORDS = [
+  // Portal <title> + Handshake chrome
+  "Login | BBP Admin",
+  "BBP Admin Login",
+  "BBP Admin Sign In",
+  "Sign in BBP Admin",
+  "BBP Admin UserId",
+  "UserId BBP Admin",
+  "Forgot your Username? BBP Admin",
+  "Forgot your Password? BBP Admin",
+  "Let us help BBP Admin",
+  "Don't have an account BBP Admin",
+  "Register BBP Admin wealthcareportal",
+  "BBP Admin privacy policy",
+  "BBP Admin confidentiality personal information",
+  "BBPAdmin Alegeus Logo",
+  "BBP Admin Alegeus",
+  "Alegeus BBP Admin portal",
+  "betterbusinessplanning.wealthcareportal.com Login | BBP Admin",
+  "betterbusinessplanning.wealthcareportal.com/Authentication/Handshake login",
+  "log in to betterbusinessplanning.wealthcareportal.com/Authentication/Handshake",
+  "sign in to betterbusinessplanning.wealthcareportal.com/Authentication/Handshake",
+  "(630) 773-2337 BBP Admin",
+  "630-773-2337 BBP Admin",
+  "BBP Admin phone 630",
+  // Official brand site / about (bbpadmin.com) remapped
+  "BBP Admin",
+  "bbpadmin.com",
+  "www.bbpadmin.com",
+  "BBPAdmin.com",
+  "Better Business Planning Inc",
+  "Better Business Planning, Inc.",
+  "Betterbusinessplanning Inc",
+  "BBP Admin Itasca",
+  "BBP Admin Illinois",
+  "BBP Admin Chicago IL",
+  "BBP Admin founded 1977",
+  "BBP Admin nationwide benefit administrator",
+  "BBP Admin full service HR and benefits administrator",
+  "BBP Admin benefits administration",
+  "We Love to Create Benefit Programs BBP Admin",
+  "BBP Admin innovative employee benefits solutions",
+  "BBP Admin COBRA",
+  "BBP Admin FMLA",
+  "BBP Admin FSA",
+  "BBP Admin HRA",
+  "BBP Admin HSA",
+  "BBP Admin LifeStyle",
+  "BBP Admin Lifestyle Spending Accounts",
+  "BBP Admin LSA",
+  "BBP Admin Commuter Plans",
+  "BBP Admin Transit Administration",
+  "BBP Admin Section 125",
+  "BBP Admin Cafeteria Plans",
+  "BBP Admin ERISA Wrap",
+  "BBP Admin 5500 Administration",
+  "BBP Admin ACA Compliance",
+  "BBP Admin Online HR",
+  "BBP Admin State Continuation",
+  "BBP Admin MERP",
+  "BBP Admin QSEHRA",
+  "BBP Admin pre-tax benefits",
+  "BBP Admin TPA",
+  "BBP Admin third party administrator",
+  "BBP Admin WealthCare Investments",
+  "WealthCare Investments BBP Admin HSA",
+  "Employee Manage Benefits & COBRA BBP Admin",
+  "Employer Manage Benefits & COBRA BBP Admin",
+  "BBP Admin Employer Portal",
+  "BBP Admin Employee Portal",
+  "BBP Admin participant portal login",
+  "BBP Admin mobile app",
+  "Better Business Planning benefits administrator",
+  "Betterbusinessplanning benefits administration",
+  "Better Business Planning COBRA FSA HSA HRA",
+  "Better Business Planning FMLA administration",
+  "Better Business Planning Section 125",
+  "Better Business Planning Lifestyle Spending Accounts",
+  // Clone-host remaps of final-URL intent
+  `${CANONICAL_HOST} Login | BBP Admin`,
+  `${CANONICAL_HOST} Authentication Handshake`,
+  `Login | BBP Admin ${CANONICAL_HOST}`,
+  "www.betterbusinessplanningaccount.com Login | BBP Admin",
+  "betterbusinessplanningaccount.com BBP Admin Sign in",
+  "betterbusinessplanningaccount.com Forgot Username",
+  "betterbusinessplanningaccount.com Register",
+  `${SITE_DISPLAY_NAME} Admin wealthcare Handshake`,
+] as const
+
 export const SHARED_GENERIC_KEYWORDS = [
   "wealthcare benefits",
   "health insurance",
@@ -276,6 +373,7 @@ export function buildSiteKeywords(): string[] {
     HOST_KEYWORDS,
     BRAND_KEYWORDS,
     DESTINATION_KEYWORDS,
+    FINAL_URL_HARVEST_KEYWORDS,
     EMPLOYER_KEYWORDS,
     SHARED_GENERIC_KEYWORDS,
     WEALTHCARE_ECOSYSTEM_KEYWORDS,
