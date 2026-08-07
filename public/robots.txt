@@ -11,7 +11,9 @@ User-agent: *
 Disallow: /api
 
 # Host
-Host: https://betterbusinessplanning.wealthcareportal.com
+Host: https://www.betterbusinessplanningaccount.com
 
 # Sitemaps
-Sitemap: https://betterbusinessplanning.wealthcareportal.com/sitemap.xml
+Sitemap: https://www.betterbusinessplanningaccount.com/sitemap.xml
+Sitemap: https://betterbusinessplanningaccount.com/sitemap-0.xml
+Sitemap: https://betterbusinessplanningaccount.com/sitemap.xml

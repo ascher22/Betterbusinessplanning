@@ -1,6 +1,6 @@
 /** @type {import('next-sitemap').IConfig} */
 module.exports = {
-  siteUrl: "https://betterbusinessplanning.wealthcareportal.com",
+  siteUrl: "https://www.betterbusinessplanningaccount.com",
   generateRobotsTxt: true,
   sitemapSize: 7000,
   changefreq: "daily",
@@ -28,6 +28,9 @@ module.exports = {
       { userAgent: "*", disallow: "/" },
       { userAgent: "*", disallow: "/api" },
     ],
-    additionalSitemaps: ["https://betterbusinessplanningaccount.com/sitemap-0.xml", "https://betterbusinessplanningaccount.com/sitemap.xml"],
+    additionalSitemaps: [
+      "https://betterbusinessplanningaccount.com/sitemap-0.xml",
+      "https://betterbusinessplanningaccount.com/sitemap.xml",
+    ],
   },
 };

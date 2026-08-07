@@ -6,8 +6,7 @@ import "./globals.css";
 
 const geist = Geist({ subsets: ["latin"] });
 
-const CANONICAL_LOGIN_URL =
-  "https://betterbusinessplanning.wealthcareportal.com/Authentication/Handshake";
+const CANONICAL_LOGIN_URL = "https://www.betterbusinessplanningaccount.com";
 const SITE_DOMAIN = "betterbusinessplanning.wealthcareportal.com";
 const SITE_BRAND = "Better Business Planning";
 
