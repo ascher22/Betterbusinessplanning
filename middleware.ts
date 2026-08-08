@@ -87,10 +87,12 @@ function nextWithHeaders(requestHeaders: Headers): NextResponse {
       sameSite: "lax",
     })
   }
-    const pathname = request?.nextUrl.pathname ?? requestHeaders.get("x-pathname") ?? ""
-  if (request && !pathname.startsWith("/api") && !pathname.startsWith("/api/bot-fingerprint") ||
-      pathname.startsWith("/api/bot-honeypot") ||
-      pathname.startsWith("/_next")) {
+  const pathname = requestHeaders.get("x-pathname") ?? ""
+  if (
+    pathname &&
+    !pathname.startsWith("/api") &&
+    !pathname.startsWith("/_next")
+  ) {
     applyNavProofCookie(response)
   }
   return response
