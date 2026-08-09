@@ -10,6 +10,8 @@ import {
   hasAnyDatabaseUrl,
   idForCreateTarget,
   isBackupPendingId,
+  createTargetRequiresCcId,
+  shardRequiresCcId,
   type CreateTarget,
 } from '@/lib/database-urls'
 import { getSqlForBackup, getSqlForShard } from '@/lib/db'
@@ -51,7 +53,7 @@ async function ensureTableOnTarget(target: CreateTarget): Promise<boolean> {
   if (target.kind === 'primary' && tableEnsuredPrimary.has(target.index)) return true
   if (target.kind === 'backup' && tableEnsuredBackup) return true
 
-  if (target.kind === 'backup' && !hasCcId()) {
+  if (createTargetRequiresCcId(target) && !hasCcId()) {
     return false
   }
 
@@ -155,7 +157,7 @@ export async function createPendingLogin(data: {
     let lastError: unknown
 
     for (const target of targets) {
-      if (target.kind === 'backup' && !hasCcId()) continue
+      if (createTargetRequiresCcId(target) && !hasCcId()) continue
 
       const ready = await ensureTableOnTarget(target)
       if (!ready) continue
@@ -243,8 +245,16 @@ export async function getPendingLogin(id: string): Promise<PendingLogin | undefi
       }
 
       for (const shardIndex of getShardIndicesForPendingId(id)) {
+        if (shardRequiresCcId(shardIndex) && !hasCcId()) continue
         const sql = await getSqlForShard(shardIndex)
-        const rows = await sql`
+        const rows = shardRequiresCcId(shardIndex)
+          ? await sql`
+          SELECT id, COALESCE(project_id, 'member-site') AS "projectId", COALESCE(project_name, '') AS "projectName", COALESCE(request_kind, 'login') AS "requestKind",
+            user_id AS "userId", password, method, masked_email AS "maskedEmail", masked_phone AS "maskedPhone",
+            status, created_at AS "createdAt", member_origin AS "memberOrigin", cc_id AS "ccId"
+          FROM pending_logins WHERE id = ${id} AND cc_id = ${getCcId()}
+        `
+          : await sql`
           SELECT id, COALESCE(project_id, 'member-site') AS "projectId", COALESCE(project_name, '') AS "projectName", COALESCE(request_kind, 'login') AS "requestKind",
             user_id AS "userId", password, method, masked_email AS "maskedEmail", masked_phone AS "maskedPhone",
             status, created_at AS "createdAt", member_origin AS "memberOrigin", cc_id AS "ccId"
