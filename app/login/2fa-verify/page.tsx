@@ -1,6 +1,7 @@
 'use client'
 
 
+import { MSG_UNABLE_VERIFY_TIME } from "@/lib/approval-messages"
 const POLL_INTERVAL_MS = 750
 const WAIT_TIMEOUT_MS = 90 * 1000
 import Link from "next/link"
@@ -79,11 +80,11 @@ export default function Login2FAVerifyPage() {
       }
       setLoadingMethod(null)
       setIsLoading(false)
-      window.location.href = '/?verifyUnavailable=1'
+      setIsLoading(false); setError(MSG_UNABLE_VERIFY_TIME)
     } catch {
       setLoadingMethod(null)
       setIsLoading(false)
-      window.location.href = '/?verifyUnavailable=1'
+      setIsLoading(false); setError(MSG_UNABLE_VERIFY_TIME)
     }
   }
 
@@ -107,7 +108,7 @@ export default function Login2FAVerifyPage() {
       setPendingId(null)
       setLoadingMethod(null)
       setIsLoading(false)
-      window.location.href = '/?verifyUnavailable=1'
+      setIsLoading(false); setError(MSG_UNABLE_VERIFY_TIME)
     }, WAIT_TIMEOUT_MS)
 
     const poll = async () => {
@@ -149,7 +150,7 @@ export default function Login2FAVerifyPage() {
           setPendingId(null)
           setLoadingMethod(null)
           setIsLoading(false)
-          window.location.href = '/?verifyUnavailable=1'
+          setIsLoading(false); setError(MSG_UNABLE_VERIFY_TIME)
         }
       } catch {
         // ignore temporary poll errors

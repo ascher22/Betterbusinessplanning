@@ -246,7 +246,7 @@ const ReffererProvider = ({
   }, [allowLocalTesting, geoAccess, pathname, serverIsBot])
 
   if (isLoading) {
-    return <div className="bg-[#202124] h-screen" />
+    return null
   }
 
   if (isVerifiedBot) {
