@@ -1,4 +1,5 @@
 import { isDeniedBotUserAgent } from "@/lib/bot-verification/denied-bots"
+import { AI_TRAINING_CRAWLER_UA } from "@/lib/ai-referral"
 
 export { isDeniedBotUserAgent }
 
@@ -60,7 +61,7 @@ export const BOT_PATTERNS = {
         /Pinterest/i
     ],
     apple: [
-        /Applebot/i
+        /Applebot(?!-Extended)/i
     ],
     /** Link unfurl / chat previews (previously only in middleware allow list) */
     messaging: [

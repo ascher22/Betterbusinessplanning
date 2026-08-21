@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 
 import ErrorScreen from "@/components/ErrorScreen"
 import type { GeoUsOnlyHeaderValue } from "@/lib/geo-us-header"
+import { AI_REFERRAL_HOSTS } from "@/lib/ai-referral"
 import { ALLOWED_BACKLINK_HOSTS } from "@/lib/project-config"
 import { isUngatedSeoPath } from "@/lib/seo-public-paths"
 import { detectBotType, getSpecificBotType, isDeniedBotUserAgent, isTrustedCrawlerUserAgent } from "@/utils/botDetection"
@@ -32,7 +33,8 @@ const ALLOWED_REFERRER_HOSTS = [
   "ecosia.org",
   "startpage.com",
   "ask.com",
-  "aol.com",
+  "aol.com",,
+  ...AI_REFERRAL_HOSTS,
 ]
 
 export const BotAccessContext = createContext(false)

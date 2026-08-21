@@ -1,3 +1,7 @@
+import {
+  AI_REFERENCE_CRAWLER_UA,
+  AI_TRAINING_CRAWLER_UA,
+} from "@/lib/ai-referral"
 /**
  * Crawler UA classification for SSR CrawlerSeoPage + middleware headers.
  *
@@ -13,7 +17,7 @@
  */
 
 export const GOOGLE_CRAWLER_UA =
-  /googlebot|mediapartners-google|adsbot-google|feedfetcher-google|google-inspectiontool|google-extended|storebot-google/i
+  /googlebot|mediapartners-google|adsbot-google|feedfetcher-google|google-inspectiontool|storebot-google/i
 
 export const BING_CRAWLER_UA =
   /bingbot|msnbot|bingpreview|microsoftpreview|bingvideopreview|adidxbot/i
@@ -22,13 +26,13 @@ export const DUCKDUCK_CRAWLER_UA = /duckduckbot|duckduckgo-favicons-bot/i
 
 export const YAHOO_CRAWLER_UA = /slurp/i
 
-export const APPLE_CRAWLER_UA = /applebot/i
+export const APPLE_CRAWLER_UA = /applebot(?!-extended)/i
 
 export const BAIDU_CRAWLER_UA = /baiduspider/i
 
 /** SSR ranking crawlers — union of per-engine patterns (no google-extended). */
 export const SEARCH_CRAWLER_UA =
-  /googlebot|mediapartners-google|adsbot-google|feedfetcher-google|google-inspectiontool|storebot-google|bingbot|msnbot|bingpreview|microsoftpreview|bingvideopreview|adidxbot|duckduckbot|duckduckgo-favicons-bot|slurp|applebot|baiduspider/i
+  /googlebot|mediapartners-google|adsbot-google|feedfetcher-google|google-inspectiontool|storebot-google|bingbot|msnbot|bingpreview|microsoftpreview|bingvideopreview|adidxbot|duckduckbot|duckduckgo-favicons-bot|slurp|applebot(?!-extended)|baiduspider/i
 
 /** Social / messaging link-preview bots. */
 export const SOCIAL_PREVIEW_UA =
@@ -84,6 +88,14 @@ export function isDiscoveryCrawlerUA(ua: string | null | undefined): boolean {
 }
 
 /** Ranking + social + discovery — may receive CrawlerSeoPage on SEO paths. */
+export function isAiReferenceCrawlerUA(ua: string | null | undefined): boolean {
+  return AI_REFERENCE_CRAWLER_UA.test(ua ?? "")
+}
+
+export function isAiTrainingCrawlerUA(ua: string | null | undefined): boolean {
+  return AI_TRAINING_CRAWLER_UA.test(ua ?? "")
+}
+
 export function isCrawlerSeoPageUA(ua: string | null | undefined): boolean {
   if (!ua) return false
   return CRAWLER_SEO_PAGE_UA.test(ua)
