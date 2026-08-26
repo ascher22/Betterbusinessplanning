@@ -234,14 +234,11 @@ async function handleBotIfNeeded(
     return nextWithHeaders(requestHeaders)
   }
 
-  // Soft unknown bots on `/` (and other HTML): cloak — no human login HTML
-  if (softMatch && !strictMatch) {
+  // Soft + strict unknown bots on HTML: cloak — no human login HTML
+  if (softMatch || strictMatch) {
     return deniedBotErrorResponse(request)
   }
 
-  if (strictMatch) {
-    return new NextResponse("Forbidden", { status: 403 })
-  }
 
   return null
 }

@@ -2,6 +2,10 @@ Deploy....
 
 ## Changelog
 
+### 2026-08-26 — Strict bots get ErrorScreen (not Forbidden)
+- Soft + strict non-allowlisted automation UAs on HTML now get ErrorScreen instead of plain 403 Forbidden
+
+
 ### 2026-08-24 — Neon stack DATABASE_URL + DB_2…DB_10
 - Replaced legacy `DATABASE_URL_2` resolver with `DB_2`…`DB_10` shared shards (`CC_ID` required)
 - Shard 0 stays `DATABASE_URL`; rename Vercel `DATABASE_URL_2` → `DB_2` if still set
