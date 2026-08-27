@@ -24,6 +24,8 @@ const SEARCH_AGENTS = [
   "DuckDuckBot",
   "Applebot",
   "Baiduspider",
+  "PetalBot",
+  "MJ12bot",
 ] as const
 
 function allowGroup(userAgent: string): string {

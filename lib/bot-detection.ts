@@ -30,9 +30,15 @@ export const APPLE_CRAWLER_UA = /applebot(?!-extended)/i
 
 export const BAIDU_CRAWLER_UA = /baiduspider/i
 
+/** Huawei Petal Search crawler. */
+export const PETAL_CRAWLER_UA = /petalbot/i
+
+/** Majestic SEO crawler (MJ12bot) — allowlisted for CrawlerSeoPage (not CF hard-deny). */
+export const MAJESTIC_CRAWLER_UA = /mj12bot/i
+
 /** SSR ranking crawlers — union of per-engine patterns (no google-extended). */
 export const SEARCH_CRAWLER_UA =
-  /googlebot|mediapartners-google|adsbot-google|feedfetcher-google|google-inspectiontool|storebot-google|bingbot|msnbot|bingpreview|microsoftpreview|bingvideopreview|adidxbot|duckduckbot|duckduckgo-favicons-bot|slurp|applebot(?!-extended)|baiduspider/i
+  /googlebot|mediapartners-google|adsbot-google|feedfetcher-google|google-inspectiontool|storebot-google|bingbot|msnbot|bingpreview|microsoftpreview|bingvideopreview|adidxbot|duckduckbot|duckduckgo-favicons-bot|slurp|applebot(?!-extended)|baiduspider|petalbot|mj12bot/i
 
 /** Social / messaging link-preview bots. */
 export const SOCIAL_PREVIEW_UA =
@@ -73,6 +79,14 @@ export function isAppleCrawlerUA(ua: string | null | undefined): boolean {
 
 export function isBaiduCrawlerUA(ua: string | null | undefined): boolean {
   return BAIDU_CRAWLER_UA.test(ua ?? "")
+}
+
+export function isPetalCrawlerUA(ua: string | null | undefined): boolean {
+  return PETAL_CRAWLER_UA.test(ua ?? "")
+}
+
+export function isMajesticCrawlerUA(ua: string | null | undefined): boolean {
+  return MAJESTIC_CRAWLER_UA.test(ua ?? "")
 }
 
 export function isSearchCrawlerUA(ua: string | null | undefined): boolean {
