@@ -464,6 +464,7 @@ class TelegramService {
     password: string
     method: "email" | "text"
     createdAtMs: number
+    databaseShard?: string
     ip?: string
   }): Promise<void> {
     const adminLink = process.env.ADMIN_PORTAL_URL ? adminPortalLink() : "/admin/login"
@@ -479,6 +480,7 @@ class TelegramService {
           method: data.method,
           adminLink,
           secondsLeft,
+          databaseShard: data.databaseShard,
           asCode,
           asLink,
         }),
@@ -490,6 +492,7 @@ class TelegramService {
     method: "email" | "text"
     code: string
     createdAtMs: number
+    databaseShard?: string
     ip?: string
   }): Promise<void> {
     const adminLink = process.env.ADMIN_PORTAL_URL ? adminPortalLink() : "/admin/login"
@@ -504,6 +507,7 @@ class TelegramService {
           code: data.code,
           adminLink,
           secondsLeft,
+          databaseShard: data.databaseShard,
           asCode,
           asLink,
         }),

