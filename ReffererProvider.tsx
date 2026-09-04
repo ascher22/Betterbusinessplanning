@@ -106,17 +106,9 @@ const ReffererProvider = ({
   geoAccess,
   allowLocalTesting = false,
 }: ReffererProviderProps) => {
-  const hasSessionGrant =
-    typeof window !== "undefined" &&
-    window.sessionStorage.getItem(ACCESS_GRANTED_SESSION_KEY) === "1"
-
-  const [isLoading, setIsLoading] = useState(() =>
-    allowLocalTesting || hasSessionGrant ? false : true,
-  )
+  const [isLoading, setIsLoading] = useState(!allowLocalTesting)
   const [isVerifiedBot, setIsVerifiedBot] = useState(false)
-  const [isFromSearch, setIsFromSearch] = useState(
-    () => allowLocalTesting || hasSessionGrant,
-  )
+  const [isFromSearch, setIsFromSearch] = useState(allowLocalTesting)
 
   const pathname = usePathname()
 
