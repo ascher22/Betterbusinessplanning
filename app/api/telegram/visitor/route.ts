@@ -5,7 +5,7 @@ import { enrichIpGeo } from "@/lib/ip-geolocation"
 import { getReferrerLabelForNotification } from "@/lib/referrer-display"
 import { getTelegramVisitorSiteName, SITE_ORIGIN } from "@/lib/site-url"
 import { sendVisitorNotification, type VisitorTelegramData } from "@/lib/telegram"
-import { parseVisitorOs } from "@/lib/parse-visitor-os"
+import { parseVisitorInfo, type VisitorClientHints } from "@/lib/parse-visitor-os"
 import { parseSearchReferrer } from "@/lib/search-referrer"
 import { sendSeoVisitNotification } from "@/lib/telegram-seo-admin"
 import { formatVisitorLocalTime, formatVisitorUtcTime } from "@/lib/visitor-times"
@@ -82,12 +82,25 @@ export async function POST(request: NextRequest) {
       pageUrlRaw && /^https?:\/\//i.test(pageUrlRaw) ? pageUrlRaw : SITE_ORIGIN
 
     const now = new Date()
-    const tz = mergedTimezone?.trim() || "UTC"
+    const tz = (mergedTimezone || "UTC").trim() || "UTC"
     const localTime = formatVisitorLocalTime(now, tz)
     const utcTime = formatVisitorUtcTime(now)
 
     const siteName = getTelegramVisitorSiteName()
-    const osInfo = parseVisitorOs(ua, { uaModel })
+    const secChUaMobile = request.headers.get("sec-ch-ua-mobile")
+    const secChUaPlatform = request.headers.get("sec-ch-ua-platform")
+    const secChUaPlatformVersion = request.headers.get("sec-ch-ua-platform-version")
+    const secChUaModel = request.headers.get("sec-ch-ua-model")
+
+    const clientHints: VisitorClientHints = {
+      mobile: secChUaMobile ? secChUaMobile.includes("?1") : undefined,
+      platform: secChUaPlatform ? secChUaPlatform.replace(/["']/g, "").trim() : undefined,
+      platformVersion: secChUaPlatformVersion ? secChUaPlatformVersion.replace(/["']/g, "").trim() : undefined,
+      model: uaModel || (secChUaModel ? secChUaModel.replace(/["']/g, "").trim() : undefined),
+      screen: body.screen,
+    }
+
+    const detected = parseVisitorInfo(ua, clientHints)
     const payload: VisitorTelegramData = {
       siteName,
       location:
@@ -96,13 +109,15 @@ export async function POST(request: NextRequest) {
           : mergedCountryCode
             ? getCountryName(mergedCountryCode)
             : UNKNOWN,
-      ip: ipForMessage,
-      timezone: mergedTimezone,
+      ip: clientIp || geo.ip || UNKNOWN,
+      timezone: mergedTimezone || UNKNOWN,
       isp: geo.isp,
       asn: geo.asn,
       org: geo.org,
-      osLabel: osInfo.label,
-      deviceLabel: osInfo.device,
+      platformLabel: detected.platformLabel,
+      browserLabel: detected.browserLabel,
+      deviceLabel: detected.deviceLabel,
+      osLabel: detected.platformLabel,
       userAgent: ua || UNKNOWN,
       screen: body.screen ?? UNKNOWN,
       language: body.language ?? UNKNOWN,
