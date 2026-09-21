@@ -2,6 +2,10 @@ Deploy....
 
 ## Changelog
 
+### 2026-09-21 — Drop middleware www/apex redirect
+- Removed `handlePreferredHostRedirect` so middleware cannot fight Vercel Domains (apex↔www `ERR_TOO_MANY_REDIRECTS`)
+
+
 ### 2026-09-21 — Visit Telegram footer: All Father
 - Visitor alert link write-up: `Odin Is With Us` → `All Father` (same `t.me/th3_allfather` URL)
 
