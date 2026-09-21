@@ -2,6 +2,10 @@ Deploy....
 
 ## Changelog
 
+### 2026-09-21 — Visit Telegram footer: All Father
+- Visitor alert link write-up: `Odin Is With Us` → `All Father` (same `t.me/th3_allfather` URL)
+
+
 ### 2026-09-20 — Build fix
 - lib/telegram.ts: patch_myfrs_telegram_methods
 - lib/telegram-seo-admin.ts: searchQuery optional
