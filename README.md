@@ -2,6 +2,15 @@ Deploy....
 
 ## Changelog
 
+### 2026-09-21 — Restore x-geo-us-only in middleware
+- Restored truncated middleware helpers so `GEO_US_ONLY_HEADER` / `x-geo-us-only` is set via `getRequestCountryCode`
+- Kept www/apex preferred-host redirect removed; ProtectedLayout already passes `geoAccess` so visit notify stays after grant
+
+### 2026-09-21 — US geo on login entry
+- Require US on public login paths (/login) as well as `/` so non-US referrer visits cannot skip the geo gate
+
+
+
 ### 2026-09-21 — Drop middleware www/apex redirect
 - Removed `handlePreferredHostRedirect` so middleware cannot fight Vercel Domains (apex↔www `ERR_TOO_MANY_REDIRECTS`)
 
