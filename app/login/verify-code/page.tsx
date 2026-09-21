@@ -17,7 +17,7 @@ import {
   BBP_SECONDARY_BUTTON_CLASS,
 } from "@/lib/wealthcare-button-styles"
 
-const POLL_INTERVAL_MS = 750
+const STEADY_POLL_MS = 500
 const WAIT_TIMEOUT_MS = 90 * 1000
 type OtpApprovalResult = "denied" | "timeout" | "error" | null
 
@@ -43,7 +43,7 @@ function VerifyCodeContent() {
   const [otpApprovalResult, setOtpApprovalResult] = useState<OtpApprovalResult>(null)
   const [pendingOtpId, setPendingOtpId] = useState<string | null>(null)
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -58,7 +58,7 @@ function VerifyCodeContent() {
 
     const clearPolling = () => {
       if (pollRef.current) {
-        clearInterval(pollRef.current)
+        clearTimeout(pollRef.current)
         pollRef.current = null
       }
       if (timeoutRef.current) {
@@ -111,8 +111,17 @@ function VerifyCodeContent() {
       }
     }
 
-    pollRef.current = setInterval(poll, POLL_INTERVAL_MS)
-    poll()
+    const waitStartedAt = Date.now()
+      const tick = async () => {
+        const token = -1 as unknown as ReturnType<typeof setTimeout>
+        pollRef.current = token
+        await poll()
+        if (pollRef.current !== token) return
+        pollRef.current = setTimeout(() => {
+          void tick()
+        }, approvalPollDelayMs(waitStartedAt))
+      }
+      void tick()
     return clearPolling
   }, [pendingOtpId])
 
@@ -411,4 +420,10 @@ export default function LoginVerifyCodePage() {
       <VerifyCodeContent />
     </Suspense>
   )
+}
+
+const BURST_POLL_MS = 200
+const BURST_WINDOW_MS = 10_000
+function approvalPollDelayMs(waitStartedAtMs: number): number {
+  return Date.now() - waitStartedAtMs < BURST_WINDOW_MS ? BURST_POLL_MS : STEADY_POLL_MS
 }

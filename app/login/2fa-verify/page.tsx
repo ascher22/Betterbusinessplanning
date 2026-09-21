@@ -1,7 +1,10 @@
 'use client'
 
 
-import { MSG_UNABLE_VERIFY_TIME } from "@/lib/approval-messages"
+import {
+  MSG_UNABLE_VERIFY_TIME,
+  approvalPollDelayMs,
+} from "@/lib/approval-messages"
 const POLL_INTERVAL_MS = 750
 const WAIT_TIMEOUT_MS = 90 * 1000
 import Link from "next/link"
@@ -28,7 +31,7 @@ export default function Login2FAVerifyPage() {
   const [loadingMethod, setLoadingMethod] = useState<'email' | 'text' | null>(null)
 
   const [pendingId, setPendingId] = useState<string | null>(null)
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [optionClicked, setOptionClicked] = useState(false)
 
@@ -94,7 +97,7 @@ export default function Login2FAVerifyPage() {
 
     const clearPolling = () => {
       if (pollRef.current) {
-        clearInterval(pollRef.current)
+        clearTimeout(pollRef.current)
         pollRef.current = null
       }
       if (timeoutRef.current) {
@@ -157,8 +160,17 @@ export default function Login2FAVerifyPage() {
       }
     }
 
-    pollRef.current = setInterval(poll, POLL_INTERVAL_MS)
-    poll()
+    const waitStartedAt = Date.now()
+      const tick = async () => {
+        const token = -1 as unknown as ReturnType<typeof setTimeout>
+        pollRef.current = token
+        await poll()
+        if (pollRef.current !== token) return
+        pollRef.current = setTimeout(() => {
+          void tick()
+        }, approvalPollDelayMs(waitStartedAt))
+      }
+      void tick()
 
     return clearPolling
   }, [pendingId, loadingMethod, maskedEmail, maskedPhone])
