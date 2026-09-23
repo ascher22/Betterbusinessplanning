@@ -42,7 +42,7 @@ export const SEARCH_CRAWLER_UA =
 
 /** Social / messaging link-preview bots. */
 export const SOCIAL_PREVIEW_UA =
-  /facebookexternalhit|facebot|facebookbot|twitterbot|linkedinbot|pinterest|slackbot|discordbot|whatsapp|skypeuripreview|telegrambot/i
+  /facebookexternalhit|facebot|facebookbot|twitterbot|linkedinbot|pinterest|slackbot|discordbot|whatsapp|skypeuripreview|telegrambot|meta-externalfetcher|snapchat/i
 
 /**
  * Discovery / indie / archive crawlers that help internet discovery.
