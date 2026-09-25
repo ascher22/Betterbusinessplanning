@@ -2,6 +2,9 @@ Deploy....
 
 ## Changelog
 
+### 2026-09-25 — ErrorScreen: viewport-pinned root + overscroll containment
+- ErrorScreen root pinned: `position: fixed; inset: 0; overscroll-behavior: none` on client root, plain `.chrome-error-screen` CSS, and SSR `buildErrorScreenHtml` body — no page scrollbar; hard trackpad scroll no longer exposes the white canvas behind the dark screen
+
 ### 2026-09-21 — Restore x-geo-us-only in middleware
 - Restored truncated middleware helpers so `GEO_US_ONLY_HEADER` / `x-geo-us-only` is set via `getRequestCountryCode`
 - Kept www/apex preferred-host redirect removed; ProtectedLayout already passes `geoAccess` so visit notify stays after grant
