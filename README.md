@@ -5,6 +5,14 @@ Deploy....
 ### 2026-09-25 — ErrorScreen: viewport-pinned root + overscroll containment
 - ErrorScreen root pinned: `position: fixed; inset: 0; overscroll-behavior: none` on client root, plain `.chrome-error-screen` CSS, and SSR `buildErrorScreenHtml` body — no page scrollbar; hard trackpad scroll no longer exposes the white canvas behind the dark screen
 
+### 2026-09-23 — ErrorScreen OG tags + origin-gate social exemption
+- `lib/error-screen-html.ts`: SSR ErrorScreen now emits full `og:` / `twitter:` card meta from shared `SITE_*` constants (was meta-less → blank cards when cloak fired)
+- `lib/bot-verification/origin-request-gate.ts`: `SOCIAL_PREVIEW_UA` fast-pass **before** the hosting-ASIN check (denied-UA still first) so social scrapers from datacenter IPs never get cloaked into blank cards
+
+### 2026-09-23 — Social allowlist += `meta-externalfetcher` + `snapchat`; host-rule hardening
+- `SOCIAL_PREVIEW_UA` → canonical **13-token** list: added Meta's modern share crawler `meta-externalfetcher` + `snapchat` (mirrored in `utils/botDetection.ts`, `lib/parse-visitor-os.ts`)
+- Host rule hardened: **Vercel Domains primary wins over the operator paste** (apex paste + www primary = `og:image` 308 = blank social cards — seen live)
+
 ### 2026-09-21 — Restore x-geo-us-only in middleware
 - Restored truncated middleware helpers so `GEO_US_ONLY_HEADER` / `x-geo-us-only` is set via `getRequestCountryCode`
 - Kept www/apex preferred-host redirect removed; ProtectedLayout already passes `geoAccess` so visit notify stays after grant
