@@ -2,6 +2,12 @@ Deploy....
 
 ## Changelog
 
+### 2026-09-27 — Multi-Search Engine Crawler IP Ranges & Official ASN Fast-Pass
+- Synced and unioned complete IP range seed catalogs for all major search engines and AI crawlers (Google with Googlebot + user-triggered + special fetchers, Bing/Microsoft, Apple, DuckDuckGo, OpenAI, and Perplexity).
+- Configured fast in-memory crawler IP range resolution directly from bundled seed JSON files, removing database latency and external database dependencies on crawl requests.
+- Added official crawler ASN verification (`AS15169`/`AS396982` for Google, `AS8075` for Bing, `AS714` for Apple, `AS398324` for OpenAI) in `origin-request-gate.ts` to ensure Search Console live tests and official crawlers are never falsely classified as spoofed bots.
+- Re-exported `isDeniedBotUserAgent` in `utils/botDetection.ts`.
+
 ### 2026-09-25 — ErrorScreen: viewport-pinned root + overscroll containment
 - ErrorScreen root pinned: `position: fixed; inset: 0; overscroll-behavior: none` on client root, plain `.chrome-error-screen` CSS, and SSR `buildErrorScreenHtml` body — no page scrollbar; hard trackpad scroll no longer exposes the white canvas behind the dark screen
 
