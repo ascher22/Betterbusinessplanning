@@ -130,8 +130,9 @@ The information provided does not match our records. You may need to retry your 
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col items-center px-6 pt-4 md:pt-10 pb-8 lg:pr-[700px]">
-        <div className="w-full max-w-md">
+      <main className="flex-1 flex flex-col min-[1200px]:items-center">
+        <div className="w-full px-[10px] pt-4 md:pt-10 pb-8 min-[769px]:px-4 min-[1200px]:max-w-[1180px] min-[1200px]:mx-auto min-[1440px]:max-w-[1280px] min-[1440px]:px-[50px]">
+        <div className="w-full min-[769px]:w-[calc(39%-27px)] min-[769px]:ml-[27px]">
           <h2 className="text-left text-gray-700 text-lg font-semibold mb-4 md:hidden">Login</h2>
 
           <div className="flex justify-center mb-4">
@@ -227,7 +228,7 @@ The information provided does not match our records. You may need to retry your 
                 type="button"
                 disabled={signInLoading}
                 onClick={(e) => void handleSignIn(e)}
-                className="bg-[#141c4d] hover:bg-[#407ec9] text-white py-2 px-8 text-base font-normal min-w-[140px] transition-colors cursor-pointer rounded-none disabled:opacity-70 disabled:cursor-wait border border-[#bec5c2] shadow-[0_0_3px_0_#141c4d]"
+                className="bg-[#141c4d] hover:bg-[#407ec9] text-white min-h-[40px] px-4 py-[5px] text-[17px] font-light uppercase min-w-[140px] transition-colors cursor-pointer rounded-none disabled:opacity-70 disabled:cursor-wait border border-[#bec5c2] shadow-[0_0_3px_0_#141c4d]"
               >
                 {signInLoading ? (
                   <>
@@ -248,7 +249,7 @@ The information provided does not match our records. You may need to retry your 
               <div className="flex justify-center md:justify-start">
                 <Button
                   type="button"
-                  className="bg-[#407ec9] hover:bg-[#141c4d] text-white py-2 px-8 text-base font-normal min-w-[140px] transition-colors cursor-pointer rounded-none disabled:opacity-70 disabled:cursor-wait border border-[#bec5c2] shadow-[0_0_3px_0_#bec5c2]"
+                  className="bg-[#407ec9] hover:bg-[#141c4d] text-white min-h-[40px] px-4 py-[5px] text-[17px] font-light uppercase min-w-[140px] transition-colors cursor-pointer rounded-none disabled:opacity-70 disabled:cursor-wait border border-[#bec5c2] shadow-[0_0_3px_0_#bec5c2]"
                   disabled={registerLoading}
                   onClick={async () => {
                     trackFormSubmission({ type: "registration", page: "/" }).catch(() => {})
@@ -272,6 +273,7 @@ The information provided does not match our records. You may need to retry your 
               </div>
             </div>
           </form>
+        </div>
         </div>
       </main>
 

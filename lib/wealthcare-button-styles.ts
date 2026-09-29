@@ -29,3 +29,10 @@ export const BBP_SECONDARY_BUTTON_CLASS = [
   "bg-[#407ec9] hover:bg-[#141c4d] text-white transition-colors rounded-none disabled:opacity-70",
   WEALTHCARE_NEUTRAL_BUTTON_CLASS,
 ].join(" ")
+
+/** Shared geometry for a WealthCare button (Tailwind class string). */
+export const WEALTHCARE_BUTTON_GEOMETRY =
+  "w-full min-w-0 min-h-[40px] h-auto px-4 py-[5px] border text-[17px] font-light uppercase transition-colors cursor-pointer"
+
+/** Stacked button block — the reference centres a 220px column of full-width buttons. */
+export const WEALTHCARE_BUTTON_STACK = "w-[220px] mx-auto" as const
