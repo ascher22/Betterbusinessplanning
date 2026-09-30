@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { ORG } from '@/lib/seo'
 
 export const metadata: Metadata = {
+  alternates: { canonical: null },
   title: 'Register',
   description: `Create your ${ORG.shortName} account. Register to manage your benefits with ${ORG.name}. ${ORG.tagline}`,
   robots: {

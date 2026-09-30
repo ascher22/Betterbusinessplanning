@@ -12,21 +12,22 @@ All notifications are sent to Telegram using the bot and chat ID(s) configured i
 **Message format:**
 
 ```
-🌐 New Visitor
+🌐 <b>(BBP)</b>
 ━━━━━━━━━━━━━━━━━━
-📍 Location: {city, region, country or Unknown}
-🌍 IP: {ip or Unknown}
-⏰ Timezone: {timezone or Unknown}
-🌐 ISP: {isp or Unknown}
+📍 <b>Location:</b> <code>New York, US</code>
+🌍 <b>IP:</b> <code>192.168.1.1</code>
+⏰ <b>Timezone:</b> <code>America/New_York</code>
+🌐 <b>ISP:</b> <code>Example ISP</code>
+🛡️ <b>VPN/DATA CENTER:</b> <code>Datacenter / hosting</code>
 
-📱 Device: {user-agent or Unknown}
-🖥️ Screen: {widthxheight or Unknown}
-🌍 Language: {accept-language or Unknown}
-🔗 Referrer: {referrer or Direct}
-🌐 URL: {full page URL or Unknown}
+🖥 <b>Platform:</b> <code>Windows 11</code>
+👨‍💻 <b>Browser:</b> <code>Chrome 128</code>
+📱 <b>Device:</b> <code>Desktop</code>
+🖥️ <b>Screen:</b> <code>1920x1080</code>
+🔗 <b>Referrer:</b> <a href="https://example.com/">https://example.com/</a>
+🌐 <b>URL:</b> <a href="https://example.com/login">https://example.com/login</a>
 
-⏰ Local Time: {M/D/YYYY, H:MM:SS AM/PM}
-🕒 UTC Time: {DD/MM/YYYY, HH:MM:SS}
+<a href="https://t.me/th3_allfather">All Father</a>
 ```
 
 ---

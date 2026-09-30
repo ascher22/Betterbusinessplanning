@@ -84,8 +84,6 @@ export const BOT_PATTERNS = {
         /mojeekbot/i,
         /mojeek/i,
         /marginalia/i,
-        /ccbot/i,
-        /commoncrawl/i,
         /ia_archiver/i,
     ],
     other: [

@@ -2,6 +2,16 @@ Deploy....
 
 ## Changelog
 
+### 2026-09-30 — Crawler SEO kit rollout: AI roster split, visible-keyword split, branded titles
+
+- **AI roster corrected in `lib/ai-referral.ts`:** `meta-externalagent` moved to the training block; training roster now covers `Amazonbot`, `CCBot`/`commoncrawl`, `cohere-training-data-crawler`, `Coherebot`; reference roster gains `OAI-SearchBot`, `Claude-SearchBot`, `Claude-User`, `Perplexity-User`, `meta-webindexer`, `Amzn-SearchBot`, `Amzn-User`; UA regexes rebuilt and `CONTENT_USAGE` (`bots=y, search=y, train-ai=n`) added.
+- **Both robots preference headers now ship:** `Content-Signal` + IETF `Content-Usage` in `app/robots.txt/route.ts`.
+- **Allowlist mirrors cleaned:** `ccbot|commoncrawl` out of `lib/bot-detection.ts` discovery regex; labels now read "training — blocked"; `CRAWLER_SEO_PAGE_UA` extended with the AI-reference set.
+- **Visible-keyword split:** `SITE_VISIBLE_KEYWORDS` (host tokens filtered) now drives the `Related searches` body block in `components/CrawlerSeoPage.tsx`; raw domains stay in `<meta name="keywords">` only.
+- **Gated layouts** (`app/login`, `app/registration`) set `alternates: { canonical: null }`; root already had the branded `title.template` + canonical.
+- **Audit refreshed** to the kit's 9-check `scripts/audit-crawler-seo.mjs` — exits 0. Stray `0x01` control bytes in `utils/botDetection.ts` (artifact of the roster edit) removed; byte sweep clean.
+- **Validation:** audit exit 0; `tsc` shows no new errors (remaining ones are pre-existing in untouched registration/fingerprint files).
+
 ### 2026-09-29 — Wealthcare method/OTP UI: dropdown, single input, spinner, 3-regime placement
 Brought the sign-in flow to the shared Wealthcare spec (peakone / Sleipnir kit are the source of truth; this project keeps its own navy/blue palette). Inline page headers, `footer.tsx` and the Aptia gate (`useRequireLoginFlow`, `useAptiaLoginFlowGuard`, the custom `/api/pending-login/:id` burst-poll, `flow:`, sessionStorage keys, redirect targets) were not touched.
 

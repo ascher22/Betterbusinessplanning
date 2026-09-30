@@ -1,4 +1,4 @@
-import { LAYOUT_DESCRIPTION, PAGE_H1_HEADING, SITE_KEYWORDS } from "@/lib/seo-metadata"
+import { LAYOUT_DESCRIPTION, PAGE_H1_HEADING, SITE_KEYWORDS, SITE_VISIBLE_KEYWORDS } from "@/lib/seo-metadata"
 import { SITE_DISPLAY_NAME, SITE_ORIGIN } from "@/lib/site-url"
 
 const BBP_LOGO =
@@ -145,10 +145,10 @@ export default function CrawlerSeoPage() {
           </div>
         </section>
 
-        {SITE_KEYWORDS.length > 0 ? (
+        {SITE_VISIBLE_KEYWORDS.length > 0 ? (
           <section style={{ marginTop: 32, borderTop: "1px solid #e5e7eb", paddingTop: 24 }}>
             <p style={{ fontSize: 14, lineHeight: 1.6, color: "#4b5563", margin: 0 }}>
-              Related searches: {SITE_KEYWORDS.join(", ")}
+              Related searches: {SITE_VISIBLE_KEYWORDS.join(", ")}
             </p>
           </section>
         ) : null}
