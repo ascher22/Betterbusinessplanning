@@ -14,6 +14,7 @@ import {
   setAptiaLoginFlowStage,
 } from "@/hooks/use-aptia-login-flow-guard"
 import { useEffect, useState } from "react"
+import { PAGE_H1_HEADING } from "@/lib/seo-keywords"
 
 const SIGN_IN_LOADING_MS = 2000
 const BBP_LOGO =
@@ -147,7 +148,9 @@ The information provided does not match our records. You may need to retry your 
             accordance with our privacy policy.
           </p>
 
-          <h1 className="text-center text-gray-700 text-xl mb-4">Sign in</h1>
+          <h1 className="text-center text-gray-700 text-xl font-semibold mb-4">
+            {PAGE_H1_HEADING}
+          </h1>
 
           {error ? (
             <div className="mb-4 text-sm text-red-600 whitespace-pre-line" role="alert">

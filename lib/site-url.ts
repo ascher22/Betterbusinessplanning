@@ -1,6 +1,6 @@
 /**
  * BBP WealthCare production identity.
- * Canonical clone host is www.betterbusinessplanningaccount.com.
+ * Canonical clone host is betterbusinessplanning-wealthcareportal.com.
  */
 
 /** Short brand for UI chrome / title template suffix. */
@@ -9,7 +9,7 @@ export const SITE_DISPLAY_NAME = "BBP" as const
 /** Telegram visitor / ops label (wealthcare platform suffix). */
 export const TELEGRAM_SITE_LABEL = "BBP Wealthcare" as const
 
-export const SITE_ORIGIN = "https://www.betterbusinessplanningaccount.com" as const
+export const SITE_ORIGIN = "https://betterbusinessplanning-wealthcareportal.com" as const
 
 /** @deprecated Use SITE_ORIGIN */
 export const SITE_URL = SITE_ORIGIN
@@ -28,10 +28,15 @@ export function canonicalHostFromOrigin(): string {
   }
 }
 
-export const SITE_CONTENT_UPDATED_AT = "2026-08-05T00:00:00.000Z" as const
+export const SITE_CONTENT_UPDATED_AT = "2026-10-01T00:00:00.000Z" as const
 
-/** IndexNow verification key (hosted at /{INDEXNOW_KEY}.txt). */
-export const INDEXNOW_KEY = "666f8e849f724c5a85eaa2fd5516a0be" as const
+/**
+ * IndexNow verification key (hosted at /{INDEXNOW_KEY}.txt).
+ * Defaults to the operator-pasted key; an explicit INDEXNOW_KEY env value wins.
+ * Keep the default in sync with public/{key}.txt or the offline check fails.
+ */
+export const INDEXNOW_KEY =
+  process.env.INDEXNOW_KEY?.trim() ?? "b25c994c64a4426a81193f2074d0bd86"
 
 /** Real WealthCare portal — post-OTP / login-out Handshake URL. */
 export const PORTAL_REDIRECT_URL =

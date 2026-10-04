@@ -57,7 +57,8 @@ export const BOT_PATTERNS = {
     ],
     facebook: [
         /facebookexternalhit/i,
-        /FacebookBot/i
+        /FacebookBot/i,
+        /meta-externalfetcher/i,
     ],
     twitter: [
         /Twitterbot/i
@@ -76,8 +77,11 @@ export const BOT_PATTERNS = {
         /slackbot/i,
         /discordbot/i,
         /whatsapp/i,
-        /skypeuripreview|meta-externalfetcher|snapchat/i,
+        /skypeuripreview/i,
         /telegrambot/i,
+    ],
+    snapchat: [
+        /snapchat/i,
     ],
     /** Discovery / archive (CrawlerSeoPage allowlist — not competitive SEO) */
     discovery: [

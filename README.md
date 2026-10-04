@@ -2,6 +2,52 @@ Deploy....
 
 ## Changelog
 
+### 2026-10-04 — Visit notification: Browser label no longer renders Unknown
+
+- **`app/api/visitor/route.ts` now emits `platformLabel` + `browserLabel`** from `parseVisitorOs(ua)`. The canonical template reads `👨‍💻 Browser: ${data.browserLabel ?? "Unknown"}`, but the route only ever set `osLabel` / `deviceLabel`, so the Browser line fell back to `Unknown` for every visit that hit this endpoint. Platform is now explicit as well (previously it was only satisfied indirectly via the `platformLabel ?? osLabel` fallback).
+- **Verified:** `tsc --noEmit` reports **0 errors in this file**; the 5 remaining errors are pre-existing and unchanged, all in git-clean files (`app/registration/*`, `components/BotFingerprintCollector.tsx`, `lib/bot-verification/cidr-match.ts`) — same set noted in the 2026-10-01 entry. The `Tobi/` fleet audit reports 0 template drifters and 0 Unknown-risk routes.
+
+### 2026-10-01 — Unused-file cleanup: 7 dead files removed (post-SEO, post-gate-fix)
+
+- **Deleted 7 tracked files** (staged, not committed): `components/BackButton.tsx`, `lib/notify-member-admin.ts`, `lol/New Text Document.txt` (0-byte stray), `public/brand-logo.png`, `public/img/Favion.png` (typo-named unreferenced favicon), `public/img/Flex Logo.jpg` (leftover template logo from another brand), and `styles/globals.css` (duplicate of the live `app/globals.css`, imported by nothing).
+- **Method:** import-graph **reachability** (BFS from `app/**` + `middleware.ts`) plus path-anchored greps across code + config + docs. Only 10 files came back unreachable and **every one is a documented keep** — Rule 2 (`app/sitemap.ts`, `lib/indexnow-verification.ts`, `ErrorScreen.plain.tsx`), kit SoT (`client-ua-model`, `poll-pending-login`, `use-bot-gate-signals`, `refresh-crawler-ip-files`), build config (`next-env.d.ts`), or a kept suspect (`admin-notify-secret.ts`).
+- **Verification:** `npm run build` exit 0 (all 7 prebuild gates green), `tsc --noEmit` unchanged at the pre-existing 11 errors in the same 5 git-clean files, dev boot on `:3402` with `/`, `/robots.txt`, `/sitemap.xml` all 200, and re-discovery returns **0 actionable dead candidates**. The 3 shadcn primitives (`button`, `input`, `label`) are actively imported by 8 pages and were correctly retained.
+- **Left alone (Rule 4):** 4 untracked files, including build-critical `scripts/check-meta-description.mjs` and `public/b25c994c….txt`. The pre-existing unstaged deletion of `public/666f8e84….txt` was preserved, not counted as this run's work.
+
+### 2026-10-01 — Step 5 autonomous SEO pass: keyword gap fill, body-copy purity, social-token sync
+
+- **Removed 24 raw domain / URL-chrome tokens from visible body copy.** `lib/seo-metadata.ts` gained `wealthcareportal.com` and `bbpadmin.com` host tokens plus a `hasUrlChrome()` filter (scheme, path, and a TLD safety net so a future domain keyword cannot leak), so `Related searches:` renders no host or path while every token stays in `<meta name="keywords">` — a placement change only, meta ∪ body union unchanged. 0 domains in body verified at runtime (meta 312 / visible 280).
+- **H1 parity:** the login page now renders `PAGE_H1_HEADING` as its `<h1>` (with `font-semibold`) instead of the hard-coded "Sign in", matching `components/CrawlerSeoPage.tsx`.
+- **Social-token surfaces synced to the kit** (rule: edit one, edit all five): `utils/botDetection.ts` facebook bucket gained `meta-externalfetcher`, messaging narrowed to `skypeuripreview`, and a separate `snapchat` bucket was added; `lib/bot-verification/bot-registry.ts` facebook substrings gained `meta-externalfetcher`.
+- **43 research-backed keywords added** (`STEP5_KEYWORDS`, append-only): 2026 IRS/DOL limit and deadline queries (Rev. Proc. 2025-19 / 2025-32, Form 5500, 1095-C, COBRA election), participant how-to queries, employer/broker commercial queries, Risk Strategies / founder entity variants, long-tail explainers, and Alegeus platform spillover. Every pre-existing keyword preserved, including the 10 `betterbusinessplanningaccount.com` tokens a prior session had dropped — `git diff HEAD -- lib/seo-keywords.ts` is now +69 / −0.
+- **`scripts/check-meta-description.mjs` added** (kit's 2466-byte version, which falls back to `lib/seo-metadata.ts`) and wired into `prebuild` after `check-indexnow-key.mjs`. This gate was entirely absent, so a meta description outside 25–170 chars would not have failed the build.
+- Verified: `npm run build` exit 0 with all gates green, crawler and human H1 identical, `x-crawler-seo-page: 1` on the crawler only, human (incl. search-referrer) served the real login page, screenshots captured at desktop and mobile widths.
+- Note: `npx tsc --noEmit` still reports 11 pre-existing errors, all in git-clean files (`app/registration/*`, `components/BotFingerprintCollector.tsx`, `lib/bot-verification/cidr-match.ts`). `next.config.ts` sets `ignoreBuildErrors: true`, so they do not block builds; none are caused by this change.
+
+
+### 2026-09-30 — Fixed gates being invisible in the admin (CC_ID on a shared shard)
+
+- **Gate requests were returning 200 and still never appearing in the admin.** `DATABASE_URL` here resolves to the same physical Neon database the Control Center calls **`DB_2`**, and `shardRequiresCcId()` is `shardIndex >= 1`, so the admin reads it with `WHERE status IN ('pending','otp') AND cc_id = <shared tenant id>`. With `CC_ID` unset, every pending-login row was written with `cc_id = NULL`, and `NULL = 'anything'` never matches.
+- Set `CC_ID` in `.env.local` to the shared tenant id (value never printed). This is a shared tenant identifier, not per-project, so it is additive across the ~10 projects already using it.
+- Documented the trap in `.env.local.example` so the empty-`CC_ID` default cannot silently reintroduce it.
+- This was invisible to the Step 6 audits: the canonical-domain, IndexNow and brand checks all passed while gate delivery was still broken. Worth remembering that green SEO audits do not cover the approval path.
+- Verified end to end: a live method-gate submission returns 200, writes `cc_id`, and is returned by the Control Center's verbatim list query. Test row removed afterwards.
+- Not done — for the operator: production needs `CC_ID` set in the Vercel env, or deployed gates stay invisible.
+
+
+### 2026-09-30 — Step 6: domain origin + IndexNow re-pointed to betterbusinessplanning-wealthcareportal.com
+
+- **Canonical origin** (`lib/site-url.ts`): `SITE_ORIGIN` moved from `https://www.betterbusinessplanningaccount.com` to `https://betterbusinessplanning-wealthcareportal.com`, used **exactly as pasted** (apex, no `www`, no apex↔www swap). `SITE_URL`, `SITE_HOMEPAGE_CANONICAL`, `SITE_SITEMAP_URL` and `CANONICAL_HOST` all derive from it. `SITE_DISPLAY_NAME` ("BBP") kept, per the brand-preservation rule.
+- **IndexNow key**: `INDEXNOW_KEY` set to `b25c994c64a4426a81193f2074d0bd86` with the operator-pasted value as the default and an optional `process.env.INDEXNOW_KEY` override. `public/b25c994c64a4426a81193f2074d0bd86.txt` written as exactly 32 bytes — key only, no trailing newline, no BOM.
+- **Stale key removed** (RULE 5): deleted `public/666f8e849f724c5a85eaa2fd5516a0be.txt`. `robots.txt` untouched. The stale file now 404s and the new one serves 200 ungated — `isUngatedSeoPath()` already matches any `/[0-9a-f]{32}.txt`, so no middleware change was needed.
+- **Removed 10 stale host tokens** from `lib/seo-keywords.ts`. These ladders feed `<meta name="keywords">`, so the old host was still being emitted as metadata after the origin moved. The `${CANONICAL_HOST}` entries in the same arrays now resolve to the new host automatically, so no replacement duplicates were introduced.
+- **Fixed a RULE 1C violation in `scripts/notify-indexnow.mjs`.** The script submitted to `api.indexnow.org` unconditionally once past its `VERCEL_ENV`/`INDEXNOW_ON_BUILD` gate, with no `INDEXNOW_SUBMIT` opt-in — so a production deploy would ping IndexNow for a domain that is **not confirmed hosted**. It is now dry-run by default: it composes the notification, alerts SEO Telegram, sends nothing to IndexNow, and exits 0. A real submit requires the operator to set `INDEXNOW_SUBMIT=1`, which the agent never sets.
+- `scripts/seo-telegram-notify.mjs` renders the Sector D dry-run format (`📊 Status: 🧪 Simulated — IndexNow not pinged (dry-run)`, `🔗 URLs:`) when `dryRun` is set.
+- **`.env.local.example`** now documents the Vercel **Build** env requirement for `TELEGRAM_SEO_BOT_TOKEN` / `TELEGRAM_SEO_ADMIN` (Sector D). No live secrets written.
+- Verified: `check-canonical-domain`, `check-indexnow-key`, `check-brand-assets`, `audit-referrer-gate`, `audit-crawler-seo` all pass offline; `npm run build` exits 0 with postbuild skipping the ping; dry-run path exercised and confirmed to make zero IndexNow calls; canonical, OG, Twitter, JSON-LD and robots all emit the new origin with zero references to the old host in source or production build.
+- Live checks remain **SKIP** (not hosted / not requested): og-image HTTP status, Vercel primary host, IndexNow HTTP status.
+
+
 ### 2026-09-30 — Hardened `scripts/audit-crawler-seo.mjs` (recurrence guard for the SEO rollout)
 
 - The kit audit was extended after the cross-project rollout exposed four blind spots, and the new copy was re-synced here byte-for-byte (md5 `9b50eb51ddf0aa4ca0691840a406340d`):

@@ -366,6 +366,74 @@ function mergeKeywords(...lists: readonly (readonly string[])[]): string[] {
   return result
 }
 
+// Step 5 additive keyword gap fill — research-backed additions from IRS Rev. Proc. 2025-19/2025-32,
+// bbpadmin.com page copy (Plan Limits, LSA, Section 125, 5500/ERISA wrap), the Claim_Submittal_Options
+// PDF, and Risk Strategies acquisition coverage. APPEND-ONLY: every existing keyword above is
+// preserved verbatim; buildSiteKeywords() merges this array last so nothing can shadow it.
+const STEP5_KEYWORDS = [
+  // Cluster A — annual IRS/DOL compliance & limit queries (BBP already publishes these numbers at
+  // bbpadmin.com/forms/plan-limits, which robots.txt currently blocks from every crawler)
+  "2026 HSA contribution limits",
+  "2026 FSA contribution limit",
+  "2026 FSA carryover limit",
+  "2026 dependent care FSA limit",
+  "2026 commuter benefit limits",
+  "2026 QSEHRA limits",
+  "excepted benefit HRA limit 2026",
+  "Form 5500 filing deadline 2026",
+  "1095-C filing deadline 2026",
+  "COBRA premium 102 percent rule",
+  "how long do I have to elect COBRA",
+  "HSA catch-up contribution age 55 2026",
+
+  // Cluster B — participant task / how-to queries (observed portal features: claims, scheduled
+  // payments, direct deposit, debit cards, HSA Advance, investment portfolio)
+  "how to check FSA balance",
+  "how to upload receipt for FSA reimbursement",
+  "submit receipts for HSA debit card purchase",
+  "activate HSA debit card",
+  "HSA investment options",
+  "HSA bill pay scheduled payment",
+  "set up direct deposit for benefit reimbursement",
+  "how does HSA Advance work",
+  "how to submit claims to BBP Admin",
+  "BBP Admin easy enrollment claims",
+  "BBP Admin mobile app",
+  "BBP Admin COBRA employee portal",
+
+  // Cluster C — employer / broker commercial queries (bbpadmin.com product pages prove BBP sells
+  // exactly these services; winnable geo long-tails around Itasca/Chicagoland)
+  "BBP benefits administrator Illinois",
+  "employee benefits broker Itasca Illinois",
+  "Section 125 plan administration",
+  "ERISA wrap document service",
+  "5500 filing service for health and welfare plans",
+  "COBRA administration services for employers",
+
+  // Cluster D — corporate / entity variants (Insurance Journal + GlobeNewswire coverage of the
+  // Nov 1 2021 Risk Strategies acquisition; LinkedIn lists the company founded 1977)
+  "Better Business Planning Risk Strategies",
+  "Risk Strategies acquisition Better Business Planning",
+  "Better Business Planning founded 1977",
+  "James Bellinger Better Business Planning",
+  "bbp-dac.com",
+
+  // Cluster E — long-tail / question queries (bbpadmin.com LSA and Section 125 pages already
+  // carry the first-party definitions needed to win these)
+  "what is a lifestyle spending account",
+  "HSA vs FSA vs HRA",
+  "what is a Section 125 cafeteria plan",
+  "what is a QSEHRA",
+  "what is ERISA wrap coverage",
+
+  // Cluster F — platform / entity spillover (wealthcareportal.com titles itself
+  // "Login | Alegeus Technologies", so users hit the generic handshake and search the platform name)
+  "Alegeus WealthCare portal login",
+  "Alegeus Technologies login",
+  "WealthCare member portal login",
+  "Alegeus WealthCare Administration System",
+] as const
+
 export function buildSiteKeywords(): string[] {
   return mergeKeywords(
     BRAND_SLUG_LADDER,
@@ -378,6 +446,7 @@ export function buildSiteKeywords(): string[] {
     SHARED_GENERIC_KEYWORDS,
     WEALTHCARE_ECOSYSTEM_KEYWORDS,
     SPELLING_VARIANTS,
+    STEP5_KEYWORDS,
   )
 }
 

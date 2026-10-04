@@ -23,6 +23,15 @@ import {
 } from "./seo-telegram-notify.mjs"
 
 const INDEXNOW_ENDPOINT = "https://api.indexnow.org/IndexNow"
+
+/**
+ * RULE 1C: a real IndexNow ping is operator-only and opt-in.
+ * Default is a dry run — compose the notification, alert SEO Telegram, send
+ * nothing to api.indexnow.org. This matters before launch: the domain is not
+ * confirmed hosted, and submitting URLs for an unhosted origin is exactly the
+ * false positive the gate exists to prevent. The agent must never set this.
+ */
+const SUBMIT_ENABLED = process.env.INDEXNOW_SUBMIT?.trim() === "1"
 const LOG = "[IndexNow]"
 const banner = "=".repeat(60)
 const ok = (msg) => console.log(`${LOG} ${msg}`)
@@ -139,6 +148,7 @@ function getSiteDisplayName() {
  *   urlList: string[]
  *   keyLocation: string
  *   errorMessage?: string
+ *   dryRun?: boolean
  * }} payload
  */
 async function notifyIndexNowTelegram(payload) {
@@ -214,9 +224,8 @@ async function main() {
   const siteName = getSiteDisplayName()
   const urlList = [home, sitemap]
 
-  ok(`submitting ${home}`)
-  ok(`submitting ${sitemap}`)
   ok(`keyLocation: ${keyLocation}`)
+
 
   const telegramBase = {
     siteName,
@@ -224,6 +233,20 @@ async function main() {
     urlList,
     keyLocation,
   }
+
+  if (!SUBMIT_ENABLED) {
+    ok(
+      `dry-run — no IndexNow ping sent for ${host}. ` +
+        `Operator-only gate INDEXNOW_SUBMIT=1 enables a real submit.`,
+    )
+    for (const u of urlList) ok(`would submit ${u}`)
+    await notifyIndexNowTelegram({ ...telegramBase, success: true, dryRun: true })
+    console.log(banner)
+    process.exit(0)
+  }
+
+  ok(`submitting ${home}`)
+  ok(`submitting ${sitemap}`)
 
   try {
     const res = await fetch(INDEXNOW_ENDPOINT, {

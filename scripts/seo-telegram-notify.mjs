@@ -55,23 +55,26 @@ export async function sendSeoAdminMessage(message) {
  *   urlList: string[]
  *   keyLocation: string
  *   errorMessage?: string
+ *   dryRun?: boolean
  * }} data
  */
 export function formatIndexNowNotificationMessage(data) {
-  const statusLine = data.success
-    ? `📊 Status: ✅ Submitted — HTTP ${data.httpStatus ?? 200}`
-    : data.errorMessage
-      ? `📊 Status: ❌ Error — ${data.errorMessage}`
-      : `📊 Status: ❌ Failed — HTTP ${data.httpStatus ?? "unknown"}${
-          data.responseSnippet ? ` (${data.responseSnippet})` : ""
-        }`
+  const statusLine = data.dryRun
+    ? `📊 Status: 🧪 Simulated — IndexNow not pinged (dry-run)`
+    : data.success
+      ? `📊 Status: ✅ Submitted — HTTP ${data.httpStatus ?? 200}`
+      : data.errorMessage
+        ? `📊 Status: ❌ Error — ${data.errorMessage}`
+        : `📊 Status: ❌ Failed — HTTP ${data.httpStatus ?? "unknown"}${
+            data.responseSnippet ? ` (${data.responseSnippet})` : ""
+          }`
 
   const lines = [
     `📡 IndexNow — ${data.siteName}`,
     data.siteUrl,
     SEP,
     statusLine,
-    "🔗 URLs submitted:",
+    data.dryRun ? "🔗 URLs:" : "🔗 URLs submitted:",
     ...data.urlList.map((url) => `  • ${url}`),
     `🔑 Key location: ${data.keyLocation}`,
     `🕐 Time: ${new Date().toISOString()}`,

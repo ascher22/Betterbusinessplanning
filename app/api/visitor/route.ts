@@ -96,6 +96,8 @@ export async function POST(request: NextRequest) {
       asn: geo.asn,
       org: geo.org,
       osLabel: osInfo.label,
+      platformLabel: osInfo.platformLabel,
+      browserLabel: osInfo.browserLabel,
       deviceLabel: osInfo.device,
       userAgent: ua || UNKNOWN,
       screen: body.screen ?? UNKNOWN,
