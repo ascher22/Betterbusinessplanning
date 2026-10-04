@@ -9,8 +9,10 @@ import {
 function buildAlternateNames(): string[] {
   const host = canonicalHostFromOrigin()
   return [
+    "Better Business Planning",
+    "Better Business Planning, Inc.",
+    "BBP Wealthcare",
     `${SITE_DISPLAY_NAME} Login`,
-    SITE_DISPLAY_NAME,
     host.toLowerCase(),
   ]
 }

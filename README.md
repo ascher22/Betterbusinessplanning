@@ -2,7 +2,11 @@ Deploy....
 
 ## Changelog
 
-### 2026-10-04 — Visit notification: Browser label no longer renders Unknown
+### 2026-10-04 — Search engine site names alignment and CrawlerSeoHead delivery
+- **Alternate Names Expansion**: Added `"Better Business Planning"`, `"Better Business Planning, Inc."`, and `"BBP Wealthcare"` to `buildAlternateNames()` in `components/structured-data.tsx`, resolving acronym ambiguity and connecting the brand name directly with the canonical domain (`betterbusinessplanning-wealthcareportal.com`). Removed duplicate entry of `SITE_DISPLAY_NAME`.
+- **Crawler Head Parity (`CrawlerSeoHead`)**: Added `components/CrawlerSeoHead.tsx` rendered in `app/layout.tsx` on the crawler branch (`if (isCrawlerSeo)`), ensuring Googlebot and Bingbot receive `<title>`, `<meta property="og:site_name">`, canonical, and favicon links hoisted via React 19.
+- **Verification**: `scripts/audit-crawler-seo.mjs` exits 0; `npm run build` completed successfully with all 7 prebuild gates passing.
+
 
 - **`app/api/visitor/route.ts` now emits `platformLabel` + `browserLabel`** from `parseVisitorOs(ua)`. The canonical template reads `👨‍💻 Browser: ${data.browserLabel ?? "Unknown"}`, but the route only ever set `osLabel` / `deviceLabel`, so the Browser line fell back to `Unknown` for every visit that hit this endpoint. Platform is now explicit as well (previously it was only satisfied indirectly via the `platformLabel ?? osLabel` fallback).
 - **Verified:** `tsc --noEmit` reports **0 errors in this file**; the 5 remaining errors are pre-existing and unchanged, all in git-clean files (`app/registration/*`, `components/BotFingerprintCollector.tsx`, `lib/bot-verification/cidr-match.ts`) — same set noted in the 2026-10-01 entry. The `Tobi/` fleet audit reports 0 template drifters and 0 Unknown-risk routes.
